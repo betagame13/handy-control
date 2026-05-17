@@ -99,7 +99,7 @@
       text-transform:none;letter-spacing:0;transition:all .3s;
     }
     .chart-wrap{position:relative;height:150px;width:100%;}
-    #velChart{display:block;width:100%;height:100%;border-radius:8px;}
+    #velChart{display:block;width:100%;height:130px;border-radius:8px;}
 
     /* CARD */
     .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;}
@@ -259,7 +259,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.0.9</div>
+<div class="version-tag">v1.1.1</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -301,14 +301,12 @@ function resizeChart(){
   if(!canvas || !ctx) return;
   const wrap = canvas.parentElement;
   const dpr  = window.devicePixelRatio || 1;
-  const W    = wrap.clientWidth;
-  const H    = wrap.clientHeight;
-  // Reseta canvas — isso descarta o scale acumulado automaticamente
+  const W    = wrap.offsetWidth  || 800;
+  const H    = wrap.offsetHeight || 130;
   canvas.width  = W * dpr;
   canvas.height = H * dpr;
   canvas.style.width  = W + "px";
   canvas.style.height = H + "px";
-  // Aplica scale UMA vez apos reset
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 window.addEventListener("resize", resizeChart);
@@ -350,19 +348,21 @@ const PATTERN_COLORS = {
 
 function drawChart(){
   if(!ctx || !canvas.width) return;
-  const W   = canvas.clientWidth  || canvas.width;
-  const H   = canvas.clientHeight || canvas.height;
+  const dpr = window.devicePixelRatio || 1;
+  const W   = canvas.width  / dpr;
+  const H   = canvas.height / dpr;
+  if(W < 10 || H < 10) return;
   const now = performance.now();
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, W * dpr, H * dpr);
 
-  // Grid
+  // Grid sempre visivel
   [25, 50, 75].forEach(pct => {
     const y = velY(pct, H);
     ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y);
-    ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle = "rgba(255,255,255,0.18)"; ctx.font="9px system-ui";
-    ctx.fillText(pct+"%", 4, y-3);
+    ctx.strokeStyle = "rgba(255,255,255,0.07)"; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.font="10px system-ui";
+    ctx.fillText(pct+"%", 6, y-4);
   });
 
   if(samples.length < 2) return;
@@ -490,7 +490,20 @@ function enterApp(){
     loadAdminTokens();
   }
   listenHandyState();
-  setTimeout(()=>{ resizeChart(); startChartLoop(); startSampling(); },150);
+  // Tenta ate o canvas ter tamanho real (max 10 tentativas)
+  let _tries = 0;
+  function initChart(){
+    const wrap = document.querySelector('.chart-wrap');
+    const W = wrap ? wrap.offsetWidth : 0;
+    if(W > 10 || _tries++ > 10){
+      resizeChart();
+      startChartLoop();
+      startSampling();
+    } else {
+      setTimeout(initChart, 100);
+    }
+  }
+  setTimeout(initChart, 100);
 }
 
 // TIMER
