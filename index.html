@@ -255,11 +255,18 @@
       </div>
     </div>
 
+    <!-- Admin -->
+    <div class="hidden" id="adminSection">
+      <div class="card">
+        <div class="card-title">&#128272; Tokens ativos</div>
+        <div class="admin-grid" id="adminGrid"><div style="color:var(--muted);font-size:13px">Carregando...</div></div>
+      </div>
+    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.1.2</div>
+<div class="version-tag">v1.1.3</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -485,6 +492,8 @@ function enterApp(){
     const b=$("timerBadge"); b.classList.remove("hidden");
     timerDuration=session.token.duration;
     b.textContent=formatTime(timerDuration);
+    // Inicia timer imediatamente ao entrar
+    startTimer();
   } else {
     $("adminSection").classList.remove("hidden");
     loadAdminTokens();
@@ -579,7 +588,6 @@ function setVel(v){
     if(!isRunning&&!ansiosoOn){
       isRunning=true;
       sendCmd({type:"start",velocity:v,pattern:"steady"});
-      startTimer();
     } else {
       sendCmd({type:"velocity",value:v});
     }
