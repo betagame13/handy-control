@@ -258,7 +258,7 @@
     <div class="card">
       <div class="card-title">Padroes de movimento</div>
       <div class="patterns">
-        <button class="btn-pattern active" data-pattern="steady"><span class="pat-icon">&#10145;&#65039;</span><span class="pat-name">Constante</span><span class="pat-desc">Velocidade fixa</span></button>
+        <button class="btn-pattern active" data-pattern="steady"><span class="pat-icon">&#127909;</span><span class="pat-name">Direto</span><span class="pat-desc">Sem padrão — velocidade exata</span></button>
         <button class="btn-pattern" data-pattern="wave"><span class="pat-icon">&#12316;&#65039;</span><span class="pat-name">Onda</span><span class="pat-desc">Sobe e desce</span></button>
         <button class="btn-pattern" data-pattern="pulse"><span class="pat-icon">&#128147;</span><span class="pat-name">Pulso</span><span class="pat-desc">Pulsos rapidos</span></button>
         <button class="btn-pattern" data-pattern="random"><span class="pat-icon">&#127922;</span><span class="pat-name">Aleatorio</span><span class="pat-desc">Velocidade variada</span></button>
@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.1.5</div>
+<div class="version-tag">v1.1.6</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -412,7 +412,7 @@ function drawChart(){
     const jumpNext = Math.abs(p3.y - p2.y) / H;
 
     // Se mudanca brusca (>15% da altura) usa linha reta — sem chifres
-    if(jumpCurr > 0.15 || jumpPrev > 0.15 || jumpNext > 0.15){
+    if(jumpCurr > 0.30 || jumpPrev > 0.30 || jumpNext > 0.30){
       ctx.lineTo(p2.x, p2.y);
     } else {
       // Mudanca gradual — usa Catmull-Rom suave
@@ -610,6 +610,7 @@ function setVel(v){
     if(!isRunning&&!ansiosoOn){
       isRunning=true;
       sendCmd({type:"start",velocity:v,pattern:currentPattern});
+      sendCmd({type:"velocity",value:v});
     } else {
       sendCmd({type:"velocity",value:v});
     }
@@ -630,6 +631,7 @@ function doStop(){
   velNum.textContent=0; slider.value=0; slider.style.setProperty("--val","0%");
   updatePatternBadge("Parado");
   updateSliderLock("steady");
+  const ph=$("patternHint"); if(ph){ ph.textContent="Direto: velocidade exata do slider, sem variacao"; ph.classList.remove("locked"); }
 }
 
 // PADROES
@@ -668,7 +670,7 @@ function updateSliderLock(pat){
     if(h){ h.textContent="Aleatório: sorteia 0% a 100% livremente"; h.classList.add("locked"); }
   } else if(pat==="steady"){
     s.classList.remove("locked"); if(p) p.classList.remove("locked");
-    if(h){ h.textContent="Arraste para controlar a velocidade"; h.classList.remove("locked"); }
+    if(h){ h.textContent="Manual: você controla direto pelo slider"; h.classList.remove("locked"); }
   } else if(pat==="wave"){
     s.classList.remove("locked"); if(p) p.classList.remove("locked");
     if(h){ h.textContent="Onda: oscila em torno da velocidade escolhida"; h.classList.remove("locked"); }
@@ -684,7 +686,14 @@ function updateSliderLock(pat){
 function startPatternLoop(pat, baseVel){
   stopPatternLoop();
   updateSliderLock(pat);
-  if(pat==="steady") return;
+  if(pat==="steady"){
+    // Manual: envia a velocidade atual do slider imediatamente
+    if(baseVel > 0){
+      currentVel = baseVel;
+      sendCmd({type:"velocity", value:baseVel});
+    }
+    return;
+  }
 
   let tick=0, high=true, cur=5;
   const interval = pat==="tease" ? 1200 : 800;
@@ -693,12 +702,14 @@ function startPatternLoop(pat, baseVel){
     let v = baseVel;
 
     if(pat==="wave"){
-      v = Math.round(baseVel * 0.5 + baseVel * 0.5 * Math.sin(tick += 0.2));
-      v = Math.max(1, Math.min(100, v));
+      // Onda completa: de quase 0 ate o valor do slider
+      const raw = Math.sin(tick += 0.06);
+      v = Math.round(baseVel * 0.5 + baseVel * 0.5 * raw);
+      v = Math.max(2, Math.min(100, v));
     }
     else if(pat==="pulse"){
-      v = high ? baseVel : Math.max(5, Math.round(baseVel * 0.3));
-      high = !high;
+      // Seno de frequencia 2x a onda — picos suaves e rapidos
+      v = Math.round(baseVel * 0.5 + baseVel * 0.5 * Math.sin(tick += 0.5));
       v = Math.max(1, Math.min(100, v));
     }
     else if(pat==="random"){
