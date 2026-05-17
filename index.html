@@ -265,7 +265,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.0.1</div>
+<div class="version-tag">v1.0.2</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -293,7 +293,6 @@ let isRunning=false,ansiosoOn=false,currentPattern="steady",patternInterval=null
 // GRAFICO
 const canvas    = $("velChart");
 const ctx       = canvas ? canvas.getContext("2d") : null;
-const chartLabel= $("chartVelLabel");
 const chartPat  = $("chartPatternLabel");
 const HISTORY   = 80;
 let   velHistory= new Array(HISTORY).fill(0);
@@ -312,7 +311,6 @@ function pushVel(v){
   velHistory.push(v);
   if(velHistory.length > HISTORY) velHistory.shift();
   currentVel = v;
-  if(chartLabel) chartLabel.innerHTML = v+"<span class="chart-vel-pct">%</span>";
 }
 
 // Cores por padrao
