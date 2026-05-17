@@ -35,8 +35,7 @@
       background: var(--surface2); border: 1px solid var(--border);
       border-radius: 10px; color: var(--text); font-size: 16px;
       outline: none; transition: border-color 0.2s; letter-spacing: 3px; text-align: center;
-      text-transform: uppercase;
-    }
+          }
     .login-input::placeholder { letter-spacing: 1px; text-transform: none; font-size: 13px; }
     .login-input:focus { border-color: var(--purple); }
     .login-btn {
@@ -293,9 +292,9 @@
   import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const FIREBASE_CONFIG = {
-    apiKey: "FIREBASE_API_KEY",
+    apiKey: "AIzaSy_placeholder",
     authDomain: "FIREBASE_AUTH_DOMAIN",
-    databaseURL: "FIREBASE_DATABASE_URL",
+    databaseURL: "https://handy-stripchat-default-rtdb.firebaseio.com",
     projectId: "FIREBASE_PROJECT_ID",
     storageBucket: "FIREBASE_STORAGE_BUCKET",
     messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID",
@@ -319,7 +318,7 @@
   const $ = id => document.getElementById(id);
 
   // ── LOGIN ─────────────────────────────────────────────────────────────
-  $('btnLogin').onclick = () => doLogin($('tokenInput').value.trim().toUpperCase());
+  $('btnLogin').onclick = () => doLogin($('tokenInput').value.trim());
   $('tokenInput').onkeydown = e => e.key === 'Enter' && $('btnLogin').click();
 
   async function doLogin(code) {
