@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.0</div>
+<div class="version-tag">v1.2.1</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -702,12 +702,13 @@ function startPatternLoop(pat, baseVel){
     let v = baseVel;
 
     if(pat==="wave"){
-      tick += 0.04;
-      const norm = (Math.sin(tick * Math.PI * 2) + 1) / 2;
-      const vf = norm * baseVel; // sem arredondamento
+      // Onda calculada via tempo real — completamente lisa
+      const t    = performance.now() / 1000; // segundos
+      const norm = (Math.sin(t * Math.PI * 0.4) + 1) / 2; // ciclo ~5s
+      const vf   = norm * baseVel;
       currentVel = vf;
       if(vf < 2){ sendCmd({type:"stop"}); return; }
-      sendCmd({type:"velocity", value: Math.round(vf)}); // Handy precisa inteiro mas grafico usa float
+      sendCmd({type:"velocity", value: Math.round(vf)});
       return;
     }
     else if(pat==="pulse"){
