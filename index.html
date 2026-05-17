@@ -265,7 +265,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.0.0</div>
+<div class="version-tag">v1.0.1</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -389,17 +389,33 @@ function doLogin(){
   const err = $("loginErr");
   err.textContent="";
   if(!raw){ err.textContent="Digite o token."; return; }
-  if(raw===ADMIN_PASS){ session={code:"ADMIN",isAdmin:true}; isAdmin=true; enterApp(); return; }
+
+  // Admin — comparação direta, sem Firebase, sem transformar case
+  if(raw===ADMIN_PASS){
+    session={code:"ADMIN",isAdmin:true};
+    isAdmin=true;
+    enterApp();
+    return;
+  }
+
+  // Token — busca no Firebase
   const code=raw.toUpperCase();
   err.textContent="Verificando...";
-  get(ref(db,"tokens/"+code)).then(snap=>{
+
+  const tokenRef = ref(db,"tokens/"+code);
+  get(tokenRef).then(snap=>{
     if(!snap.exists()){ err.textContent="Token invalido."; return; }
     const token=snap.val();
     if(token.revoked){ err.textContent="Token revogado."; return; }
     const now=Date.now();
-    if(token.activatedAt && now-token.activatedAt>token.duration){ err.textContent="Token expirado."; return; }
+    if(token.activatedAt && now-token.activatedAt>token.duration){
+      err.textContent="Token expirado."; return;
+    }
     session={code,token}; isAdmin=false; enterApp();
-  }).catch(()=>{ err.textContent="Erro de conexao."; });
+  }).catch(e=>{
+    console.error("Firebase erro:", e);
+    err.textContent="Erro de conexao com Firebase. Verifique as credenciais.";
+  });
 }
 
 function enterApp(){
