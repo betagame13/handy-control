@@ -298,14 +298,18 @@ let   chartRaf    = null;
 let   sampleInterval = null;
 
 function resizeChart(){
-  if(!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
+  if(!canvas || !ctx) return;
   const wrap = canvas.parentElement;
-  canvas.width  = wrap.clientWidth  * dpr;
-  canvas.height = wrap.clientHeight * dpr;
-  canvas.style.width  = wrap.clientWidth  + "px";
-  canvas.style.height = wrap.clientHeight + "px";
-  if(ctx) ctx.scale(dpr, dpr);
+  const dpr  = window.devicePixelRatio || 1;
+  const W    = wrap.clientWidth;
+  const H    = wrap.clientHeight;
+  // Reseta canvas — isso descarta o scale acumulado automaticamente
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + "px";
+  canvas.style.height = H + "px";
+  // Aplica scale UMA vez apos reset
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 window.addEventListener("resize", resizeChart);
 
@@ -346,11 +350,11 @@ const PATTERN_COLORS = {
 
 function drawChart(){
   if(!ctx || !canvas.width) return;
-  const W   = canvas.width  / (window.devicePixelRatio||1);
-  const H   = canvas.height / (window.devicePixelRatio||1);
+  const W   = canvas.clientWidth  || canvas.width;
+  const H   = canvas.clientHeight || canvas.height;
   const now = performance.now();
 
-  ctx.clearRect(0, 0, W, H);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Grid
   [25, 50, 75].forEach(pct => {
@@ -518,11 +522,26 @@ function formatTime(ms){
 
 // ESTADO
 function listenHandyState(){
-  onValue(ref(db,"handy/state"),snap=>{
+  // Timeout: se Firebase nao responder em 4s, mostra offline
+  const fbTimeout = setTimeout(()=>{
+    if($("statusText").textContent === "Aguardando conexao..."){
+      $("statusDot").className="status-dot offline";
+      $("statusText").textContent="Firebase nao configurado";
+      $("statusMode").textContent="Sem conexao";
+    }
+  }, 4000);
+
+  onValue(ref(db,"handy/state"), snap=>{
+    clearTimeout(fbTimeout);
     const s=snap.val()||{};
     $("statusDot").className="status-dot "+(s.online?"online":"offline");
     $("statusText").textContent=s.online?"Handy conectado":"Handy offline";
     $("statusMode").textContent=s.mode||"Parado";
+  }, err=>{
+    clearTimeout(fbTimeout);
+    $("statusDot").className="status-dot offline";
+    $("statusText").textContent="Erro Firebase — verifique as credenciais";
+    $("statusMode").textContent="Sem conexao";
   });
 }
 
