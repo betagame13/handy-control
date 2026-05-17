@@ -265,7 +265,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.0.5</div>
+<div class="version-tag">v1.0.7</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -294,30 +294,35 @@ let isRunning=false,ansiosoOn=false,currentPattern="steady",patternInterval=null
 const canvas    = $("velChart");
 const ctx       = canvas ? canvas.getContext("2d") : null;
 const chartPat  = $("chartPatternLabel");
-const HISTORY   = 80;
+const HISTORY   = 120;
 let   velHistory= new Array(HISTORY).fill(0);
-let   chartRaf  = null;
 let   currentVel= 0;
+let   chartRaf  = null;
+let   sampleInterval = null;
 
 function resizeChart(){
   if(!canvas) return;
   const wrap = canvas.parentElement;
-  canvas.width  = wrap.clientWidth;
-  canvas.height = wrap.clientHeight;
+  canvas.width  = wrap.clientWidth  * (window.devicePixelRatio||1);
+  canvas.height = wrap.clientHeight * (window.devicePixelRatio||1);
+  ctx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1);
 }
-window.addEventListener("resize", resizeChart);
+window.addEventListener("resize", ()=>{ resizeChart(); });
 
-function pushVel(v){
-  velHistory.push(v);
-  if(velHistory.length > HISTORY) velHistory.shift();
-  currentVel = v;
-}
+function pushVel(v){ velHistory.push(v); if(velHistory.length>HISTORY) velHistory.shift(); }
 
-// RAF continuo — roda sempre, dados atualizados pelo pushVel
 function startChartLoop(){
   if(chartRaf) return;
-  function loop(){ drawChart(); chartRaf=requestAnimationFrame(loop); }
-  chartRaf=requestAnimationFrame(loop);
+  (function loop(){ drawChart(); chartRaf=requestAnimationFrame(loop); })();
+}
+
+function stopChartLoop(){
+  if(chartRaf){ cancelAnimationFrame(chartRaf); chartRaf=null; }
+}
+
+function startSampling(){
+  if(sampleInterval) return;
+  sampleInterval=setInterval(()=>pushVel(currentVel), 100);
 }
 
 // Cores por padrao
@@ -332,7 +337,8 @@ const PATTERN_COLORS = {
 
 function drawChart(){
   if(!ctx || !canvas.width) return;
-  const W=canvas.width, H=canvas.height;
+  const W=canvas.offsetWidth || canvas.width;
+  const H=canvas.offsetHeight || canvas.height;
   ctx.clearRect(0,0,W,H);
 
   // Grid
@@ -440,8 +446,7 @@ function enterApp(){
     loadAdminTokens();
   }
   listenHandyState();
-  setTimeout(()=>{ resizeChart(); startChartLoop(); // amostras a cada 250ms
-    setInterval(()=>{ if(isRunning||ansiosoOn) pushVel(currentVel); else pushVel(0); },250); },100);
+  setTimeout(()=>{ resizeChart(); startChartLoop(); startSampling(); },150);
 }
 
 // TIMER
@@ -493,19 +498,17 @@ function setVel(v){
   if(v===0){
     if(isRunning||ansiosoOn) doStop();
   } else {
+    // Slider sempre volta para Constante
+    currentPattern="steady";
+    document.querySelectorAll(".btn-pattern").forEach(b=>b.classList.remove("active"));
+    document.querySelector(".btn-pattern[data-pattern='steady']").classList.add("active");
+    updatePatternBadge("Constante");
+    stopPatternLoop();
     if(!isRunning&&!ansiosoOn){
-      // Inicia com o padrao atual — NAO reseta para constante
       isRunning=true;
-      stopPatternLoop();
-      startPatternLoop(currentPattern,v);
-      sendCmd({type:"start",velocity:v,pattern:currentPattern});
+      sendCmd({type:"start",velocity:v,pattern:"steady"});
       startTimer();
-      const activeBtn=document.querySelector(".btn-pattern.active");
-      if(activeBtn) updatePatternBadge(activeBtn.querySelector(".pat-name").textContent);
     } else {
-      // Ja rodando — apenas atualiza velocidade base, reinicia padrao com novo valor
-      stopPatternLoop();
-      startPatternLoop(currentPattern,v);
       sendCmd({type:"velocity",value:v});
     }
   }
@@ -605,7 +608,8 @@ async function loadAdminTokens(){
 // LOGOUT
 function logout(){
   clearInterval(timerInterval); timerInterval=null;
-  stopPatternLoop(); cancelAnimationFrame(chartRaf); chartRaf=null;
+  stopPatternLoop(); stopChartLoop();
+  if(sampleInterval){ clearInterval(sampleInterval); sampleInterval=null; }
   isRunning=false; ansiosoOn=false; session=null; isAdmin=false;
   currentVel=0; velHistory.fill(0);
   $("loginWrap").style.display="flex";
