@@ -255,17 +255,11 @@
       </div>
     </div>
 
-    <div class="hidden" id="adminSection">
-      <div class="card">
-        <div class="card-title">Tokens ativos</div>
-        <div class="admin-grid" id="adminGrid"><div style="color:var(--muted);font-size:13px">Carregando...</div></div>
-      </div>
-    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.0.8</div>
+<div class="version-tag">v1.0.9</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -337,7 +331,7 @@ function stopChartLoop(){
 
 function startSampling(){
   if(sampleInterval) return;
-  sampleInterval = setInterval(()=> pushVel(currentVel), SAMPLE_RATE);
+  sampleInterval = setInterval(()=> pushVel(currentVel), 30);
 }
 
 // Cores por padrao
@@ -352,80 +346,85 @@ const PATTERN_COLORS = {
 
 function drawChart(){
   if(!ctx || !canvas.width) return;
-  const W = canvas.width  / (window.devicePixelRatio||1);
-  const H = canvas.height / (window.devicePixelRatio||1);
+  const W   = canvas.width  / (window.devicePixelRatio||1);
+  const H   = canvas.height / (window.devicePixelRatio||1);
   const now = performance.now();
 
   ctx.clearRect(0, 0, W, H);
 
-  // Grid horizontal suave
-  ctx.lineWidth = 1;
-  [25, 50, 75, 100].forEach(pct => {
-    const y = H - (pct/100) * H * 0.9 - H * 0.05;
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y);
-    ctx.strokeStyle = pct===100 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.05)";
-    ctx.stroke();
-    if(pct < 100){
-      ctx.fillStyle = "rgba(255,255,255,0.2)";
-      ctx.font = "9px system-ui";
-      ctx.fillText(pct+"%", 4, y - 3);
-    }
+  // Grid
+  [25, 50, 75].forEach(pct => {
+    const y = velY(pct, H);
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y);
+    ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.18)"; ctx.font="9px system-ui";
+    ctx.fillText(pct+"%", 4, y-3);
   });
 
   if(samples.length < 2) return;
 
-  const clr = PATTERN_COLORS[currentPattern] || PATTERN_COLORS.steady;
-
-  // Mapeia amostras para coordenadas X/Y usando tempo real
+  const clr    = PATTERN_COLORS[currentPattern] || PATTERN_COLORS.steady;
   const tStart = now - WINDOW_MS;
-  const pts = samples.map(s => ({
-    x: ((s.t - tStart) / WINDOW_MS) * W,
-    y: H - (s.v / 100) * H * 0.9 - H * 0.05
-  })).filter(p => p.x >= -10);
+
+  // Converte amostras em pontos XY
+  const pts = samples
+    .map(s => ({ x: ((s.t - tStart) / WINDOW_MS) * W, y: velY(s.v, H) }))
+    .filter(p => p.x >= -20);
 
   if(pts.length < 2) return;
 
-  // Desenha linha com curvas bezier suaves (igual Lovense)
+  // Catmull-Rom spline — linha absolutamente lisa passando por todos os pontos
   ctx.beginPath();
   ctx.moveTo(pts[0].x, pts[0].y);
-  for(let i = 1; i < pts.length; i++){
-    const prev = pts[i-1];
-    const curr = pts[i];
-    const cpx  = (prev.x + curr.x) / 2;
-    ctx.bezierCurveTo(cpx, prev.y, cpx, curr.y, curr.x, curr.y);
+
+  for(let i = 0; i < pts.length - 1; i++){
+    const p0 = pts[Math.max(i-1, 0)];
+    const p1 = pts[i];
+    const p2 = pts[i+1];
+    const p3 = pts[Math.min(i+2, pts.length-1)];
+
+    // Tensao 0.5 = Catmull-Rom classico
+    const tension = 0.5;
+    const cp1x = p1.x + (p2.x - p0.x) * tension / 3;
+    const cp1y = p1.y + (p2.y - p0.y) * tension / 3;
+    const cp2x = p2.x - (p3.x - p1.x) * tension / 3;
+    const cp2y = p2.y - (p3.y - p1.y) * tension / 3;
+
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
   }
+
   ctx.strokeStyle = clr.line;
   ctx.lineWidth   = 2.5;
   ctx.lineJoin    = "round";
   ctx.lineCap     = "round";
   ctx.stroke();
 
-  // Fill gradiente abaixo
+  // Fill suave abaixo da curva
   const last = pts[pts.length-1];
+  const first = pts[0];
   ctx.lineTo(last.x, H);
-  ctx.lineTo(pts[0].x, H);
+  ctx.lineTo(first.x, H);
   ctx.closePath();
   const grad = ctx.createLinearGradient(0, 0, 0, H);
   grad.addColorStop(0,   clr.fill);
-  grad.addColorStop(0.7, clr.fill.replace(/[\d.]+\)$/, "0.05)"));
+  grad.addColorStop(0.6, clr.fill.replace(/[\d.]+\)$/, "0.06)"));
   grad.addColorStop(1,   "rgba(0,0,0,0)");
-  ctx.fillStyle = grad;
-  ctx.fill();
+  ctx.fillStyle = grad; ctx.fill();
 
-  // Ponto animado na ponta direita
+  // Ponto pulsante na ponta
   if(currentVel > 0){
-    const pulse = 0.6 + 0.4 * Math.sin(now * 0.006);
+    const pulse = 0.65 + 0.35 * Math.sin(now * 0.007);
     ctx.beginPath();
-    ctx.arc(last.x, last.y, 4 * pulse, 0, Math.PI*2);
-    ctx.fillStyle = clr.line;
-    ctx.fill();
+    ctx.arc(last.x, last.y, 4, 0, Math.PI*2);
+    ctx.fillStyle = clr.line; ctx.fill();
     ctx.beginPath();
-    ctx.arc(last.x, last.y, 7 * pulse, 0, Math.PI*2);
-    ctx.strokeStyle = clr.line.replace(/[\d.]+\)$/, "0.3)");
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    ctx.arc(last.x, last.y, 8 * pulse, 0, Math.PI*2);
+    ctx.strokeStyle = clr.line.replace(/[\d.]+\)$/, "0.25)");
+    ctx.lineWidth = 1.5; ctx.stroke();
   }
 }
+
+function velY(v, H){ return H - (v/100) * H * 0.88 - H * 0.06; }
 
 
 // amostras via setVel e patternLoop
