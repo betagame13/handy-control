@@ -265,7 +265,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.0.4</div>
+<div class="version-tag">v1.0.5</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -313,6 +313,13 @@ function pushVel(v){
   currentVel = v;
 }
 
+// RAF continuo — roda sempre, dados atualizados pelo pushVel
+function startChartLoop(){
+  if(chartRaf) return;
+  function loop(){ drawChart(); chartRaf=requestAnimationFrame(loop); }
+  chartRaf=requestAnimationFrame(loop);
+}
+
 // Cores por padrao
 const PATTERN_COLORS = {
   steady:   {line:"rgba(124,77,255,1)",   fill:"rgba(124,77,255,0.22)"},
@@ -324,7 +331,7 @@ const PATTERN_COLORS = {
 };
 
 function drawChart(){
-  if(!ctx){ chartRaf=requestAnimationFrame(drawChart); return; }
+  if(!ctx || !canvas.width) return;
   const W=canvas.width, H=canvas.height;
   ctx.clearRect(0,0,W,H);
 
@@ -372,10 +379,9 @@ function drawChart(){
     ctx.lineWidth=2; ctx.stroke();
   }
 
-  chartRaf=requestAnimationFrame(drawChart);
 }
 
-setInterval(()=>{ if(document.getElementById("app").style.display!=="none") pushVel(currentVel); },500);
+// amostras via setVel e patternLoop
 
 // LOGIN
 const tokenInput = $("tokenInput");
@@ -434,7 +440,8 @@ function enterApp(){
     loadAdminTokens();
   }
   listenHandyState();
-  setTimeout(()=>{ resizeChart(); chartRaf=chartRaf||requestAnimationFrame(drawChart); },100);
+  setTimeout(()=>{ resizeChart(); startChartLoop(); // amostras a cada 250ms
+    setInterval(()=>{ if(isRunning||ansiosoOn) pushVel(currentVel); else pushVel(0); },250); },100);
 }
 
 // TIMER
@@ -483,15 +490,24 @@ function setVel(v){
   slider.style.setProperty("--val",v+"%");
   currentVel=v;
   document.querySelectorAll(".btn-preset").forEach(b=>b.classList.toggle("active",parseInt(b.dataset.v)===v));
-  if(v===0){ if(isRunning||ansiosoOn) doStop(); }
-  else {
+  if(v===0){
+    if(isRunning||ansiosoOn) doStop();
+  } else {
     if(!isRunning&&!ansiosoOn){
-      isRunning=true; stopPatternLoop(); startPatternLoop(currentPattern,v);
+      // Inicia com o padrao atual — NAO reseta para constante
+      isRunning=true;
+      stopPatternLoop();
+      startPatternLoop(currentPattern,v);
       sendCmd({type:"start",velocity:v,pattern:currentPattern});
       startTimer();
       const activeBtn=document.querySelector(".btn-pattern.active");
       if(activeBtn) updatePatternBadge(activeBtn.querySelector(".pat-name").textContent);
-    } else sendCmd({type:"velocity",value:v});
+    } else {
+      // Ja rodando — apenas atualiza velocidade base, reinicia padrao com novo valor
+      stopPatternLoop();
+      startPatternLoop(currentPattern,v);
+      sendCmd({type:"velocity",value:v});
+    }
   }
 }
 
@@ -535,8 +551,8 @@ function startPatternLoop(pat,baseVel){
     else if(pat==="escalate") { cur=Math.min(baseVel,cur+3); v=cur; }
     else if(pat==="tease")    {
       high=!high;
-      if(high){ currentVel=baseVel; sendCmd({type:"velocity",value:baseVel}); }
-      else    { currentVel=0;       sendCmd({type:"stop"}); }
+      if(high){ currentVel=100; sendCmd({type:"velocity",value:100}); }
+      else    { currentVel=0;   sendCmd({type:"stop"}); }
       return;
     }
     v=Math.max(1,Math.min(100,v));
