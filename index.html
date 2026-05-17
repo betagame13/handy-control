@@ -258,7 +258,7 @@
     <div class="card">
       <div class="card-title">Padroes de movimento</div>
       <div class="patterns">
-        <button class="btn-pattern active" data-pattern="steady"><span class="pat-icon">&#127909;</span><span class="pat-name">Direto</span><span class="pat-desc">Sem padrão — velocidade exata</span></button>
+        <button class="btn-pattern active" data-pattern="steady"><span class="pat-icon">🖐</span><span class="pat-name">Manual</span><span class="pat-desc">Você controla</span></button>
         <button class="btn-pattern" data-pattern="wave"><span class="pat-icon">&#12316;&#65039;</span><span class="pat-name">Onda</span><span class="pat-desc">Sobe e desce</span></button>
         <button class="btn-pattern" data-pattern="pulse"><span class="pat-icon">&#128147;</span><span class="pat-name">Pulso</span><span class="pat-desc">Pulsos rapidos</span></button>
         <button class="btn-pattern" data-pattern="random"><span class="pat-icon">&#127922;</span><span class="pat-name">Aleatorio</span><span class="pat-desc">Velocidade variada</span></button>
@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.1.6</div>
+<div class="version-tag">v1.1.7</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -696,16 +696,15 @@ function startPatternLoop(pat, baseVel){
   }
 
   let tick=0, high=true, cur=5;
-  const interval = pat==="tease" ? 1200 : 800;
+  const interval = pat==="tease" ? 1200 : pat==="wave" ? 200 : 800;
 
   patternInterval = setInterval(()=>{
     let v = baseVel;
 
     if(pat==="wave"){
-      // Onda completa: de quase 0 ate o valor do slider
-      const raw = Math.sin(tick += 0.06);
-      v = Math.round(baseVel * 0.5 + baseVel * 0.5 * raw);
-      v = Math.max(2, Math.min(100, v));
+      tick += 0.08;
+      v = Math.round(baseVel * 0.5 + baseVel * 0.5 * Math.sin(tick));
+      v = Math.max(1, Math.min(100, v));
     }
     else if(pat==="pulse"){
       // Seno de frequencia 2x a onda — picos suaves e rapidos
