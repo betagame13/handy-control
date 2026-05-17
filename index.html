@@ -116,6 +116,16 @@
       outline:none;cursor:pointer;margin-bottom:16px;
       touch-action:none;
     }
+    .vel-slider.locked{
+      opacity:0.35; cursor:not-allowed; pointer-events:none;
+    }
+    .vel-slider.locked::-webkit-slider-thumb{ cursor:not-allowed; }
+    .pattern-hint{
+      font-size:11px; color:var(--muted); text-align:center;
+      margin-top:-4px; margin-bottom:10px; min-height:16px;
+      transition: color 0.2s;
+    }
+    .pattern-hint.locked{ color:var(--purple); }
     .vel-slider::-webkit-slider-thumb{
       -webkit-appearance:none;width:28px;height:28px;border-radius:50%;
       background:#fff;box-shadow:0 2px 12px rgba(124,77,255,.8);cursor:pointer;
@@ -132,6 +142,7 @@
     .btn-preset:hover,.btn-preset.active{background:var(--purple);border-color:var(--purple);color:#fff;}
     .btn-preset.zero{border-color:rgba(244,67,54,.4);color:var(--red);}
     .btn-preset.zero.active{background:var(--red);border-color:var(--red);color:#fff;}
+    .vel-presets.locked .btn-preset:not(.zero){ opacity:0.3; pointer-events:none; cursor:not-allowed; }
 
 
 
@@ -234,7 +245,8 @@
         <div class="vel-unit">% de velocidade</div>
       </div>
       <input type="range" class="vel-slider" id="velSlider" min="0" max="100" value="0" step="1">
-      <div class="vel-presets">
+      <div class="pattern-hint" id="patternHint">Arraste para controlar a velocidade</div>
+      <div class="vel-presets" id="velPresets">
         <button class="btn-preset zero active" data-v="0">0%</button>
         <button class="btn-preset" data-v="25">25%</button>
         <button class="btn-preset" data-v="50">50%</button>
@@ -266,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.1.3</div>
+<div class="version-tag">v1.1.4</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -579,15 +591,16 @@ function setVel(v){
   if(v===0){
     if(isRunning||ansiosoOn) doStop();
   } else {
-    // Slider sempre volta para Constante
-    currentPattern="steady";
-    document.querySelectorAll(".btn-pattern").forEach(b=>b.classList.remove("active"));
-    document.querySelector(".btn-pattern[data-pattern='steady']").classList.add("active");
-    updatePatternBadge("Constante");
+    if(isPatternLocked(currentPattern)){
+      // Padrao bloqueado — slider nao faz nada
+      return;
+    }
+    // Padroes livres: atualiza velocidade base sem mudar padrao
     stopPatternLoop();
+    startPatternLoop(currentPattern, v);
     if(!isRunning&&!ansiosoOn){
       isRunning=true;
-      sendCmd({type:"start",velocity:v,pattern:"steady"});
+      sendCmd({type:"start",velocity:v,pattern:currentPattern});
     } else {
       sendCmd({type:"velocity",value:v});
     }
@@ -607,6 +620,7 @@ function doStop(){
   document.querySelector(".btn-preset.zero").classList.add("active");
   velNum.textContent=0; slider.value=0; slider.style.setProperty("--val","0%");
   updatePatternBadge("Parado");
+  updateSliderLock("steady");
 }
 
 // PADROES
@@ -617,30 +631,90 @@ document.querySelectorAll(".btn-pattern").forEach(btn=>{
     btn.classList.add("active");
     const name=btn.querySelector(".pat-name").textContent;
     updatePatternBadge(name);
-    if(isRunning){ stopPatternLoop(); startPatternLoop(currentPattern,currentVel); sendCmd({type:"start",velocity:currentVel,pattern:currentPattern}); }
+    updateSliderLock(currentPattern);
+    if(isRunning || ansiosoOn){
+      stopPatternLoop();
+      startPatternLoop(currentPattern, currentVel);
+      sendCmd({type:"start", velocity:currentVel, pattern:currentPattern});
+    }
   });
 });
 
-function startPatternLoop(pat,baseVel){
+// Padroes que ignoram o slider e usam 0-100% proprios
+const LOCKED_PATTERNS = ["tease","random"];
+
+function isPatternLocked(pat){ return LOCKED_PATTERNS.indexOf(pat) !== -1; }
+
+function updateSliderLock(pat){
+  const s = $("velSlider");
+  const p = $("velPresets");
+  const h = $("patternHint");
+  if(!s) return;
+
+  if(pat==="tease"){
+    s.classList.add("locked"); if(p) p.classList.add("locked");
+    if(h){ h.textContent="Tease: alterna 0% ↔ 100% automaticamente"; h.classList.add("locked"); }
+  } else if(pat==="random"){
+    s.classList.add("locked"); if(p) p.classList.add("locked");
+    if(h){ h.textContent="Aleatório: sorteia 0% a 100% livremente"; h.classList.add("locked"); }
+  } else if(pat==="steady"){
+    s.classList.remove("locked"); if(p) p.classList.remove("locked");
+    if(h){ h.textContent="Arraste para controlar a velocidade"; h.classList.remove("locked"); }
+  } else if(pat==="wave"){
+    s.classList.remove("locked"); if(p) p.classList.remove("locked");
+    if(h){ h.textContent="Onda: oscila em torno da velocidade escolhida"; h.classList.remove("locked"); }
+  } else if(pat==="pulse"){
+    s.classList.remove("locked"); if(p) p.classList.remove("locked");
+    if(h){ h.textContent="Pulso: alterna entre a velocidade e 30% dela"; h.classList.remove("locked"); }
+  } else if(pat==="escalate"){
+    s.classList.remove("locked"); if(p) p.classList.remove("locked");
+    if(h){ h.textContent="Crescente: sobe gradualmente até a velocidade escolhida"; h.classList.remove("locked"); }
+  }
+}
+
+function startPatternLoop(pat, baseVel){
   stopPatternLoop();
+  updateSliderLock(pat);
   if(pat==="steady") return;
-  let tick=0,high=true,cur=5;
+
+  let tick=0, high=true, cur=5;
   const interval = pat==="tease" ? 1200 : 800;
-  patternInterval=setInterval(()=>{
-    let v=baseVel;
-    if(pat==="wave")          v=Math.round(baseVel*.5+baseVel*.5*Math.sin(tick+=.2));
-    else if(pat==="pulse")    { v=high?baseVel:Math.max(5,Math.round(baseVel*.3)); high=!high; }
-    else if(pat==="random")   v=Math.max(5,Math.round(Math.random()*baseVel));
-    else if(pat==="escalate") { cur=Math.min(baseVel,cur+3); v=cur; }
-    else if(pat==="tease")    {
-      high=!high;
-      if(high){ currentVel=100; sendCmd({type:"velocity",value:100}); }
+
+  patternInterval = setInterval(()=>{
+    let v = baseVel;
+
+    if(pat==="wave"){
+      v = Math.round(baseVel * 0.5 + baseVel * 0.5 * Math.sin(tick += 0.2));
+      v = Math.max(1, Math.min(100, v));
+    }
+    else if(pat==="pulse"){
+      v = high ? baseVel : Math.max(5, Math.round(baseVel * 0.3));
+      high = !high;
+      v = Math.max(1, Math.min(100, v));
+    }
+    else if(pat==="random"){
+      // Aleatório: 0-100% livre, ignora slider
+      v = Math.round(Math.random() * 100);
+      currentVel = v;
+      if(v < 5){ sendCmd({type:"stop"}); currentVel=0; return; }
+      sendCmd({type:"velocity", value:v});
+      return;
+    }
+    else if(pat==="escalate"){
+      cur = Math.min(baseVel, cur + 3);
+      v = cur;
+      v = Math.max(1, Math.min(100, v));
+    }
+    else if(pat==="tease"){
+      high = !high;
+      if(high){ currentVel=100; sendCmd({type:"velocity", value:100}); }
       else    { currentVel=0;   sendCmd({type:"stop"}); }
       return;
     }
-    v=Math.max(1,Math.min(100,v));
-    currentVel=v; sendCmd({type:"velocity",value:v});
-  },interval);
+
+    currentVel = v;
+    sendCmd({type:"velocity", value:v});
+  }, interval);
 }
 function stopPatternLoop(){ if(patternInterval){ clearInterval(patternInterval); patternInterval=null; } }
 
