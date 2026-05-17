@@ -13,7 +13,7 @@
     *{box-sizing:border-box;margin:0;padding:0;}
     body{background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;}
 
-    /* ── LOGIN ── */
+    /* LOGIN */
     #loginWrap{
       min-height:100vh;display:flex;align-items:center;justify-content:center;
       background:radial-gradient(ellipse at 50% 0%,rgba(124,77,255,.15) 0%,transparent 70%);
@@ -30,16 +30,15 @@
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;
     }
     .login-sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
-    /* INPUT — sem nenhum bloqueio */
     #tokenInput{
       width:100%;padding:14px 16px;margin-bottom:12px;
       background:var(--surface2);border:1px solid var(--border);
       border-radius:10px;color:var(--text);font-size:16px;
       outline:none;transition:border-color .2s;
       font-family:monospace;letter-spacing:3px;text-align:center;
-      -webkit-user-select:text;user-select:text;
-      cursor:text;
+      -webkit-user-select:text;user-select:text;cursor:text;
     }
+    #tokenInput::placeholder{font-size:13px;letter-spacing:1px;color:var(--muted);opacity:1;}
     #tokenInput:focus{border-color:var(--purple);}
     .login-btn{
       width:100%;padding:14px;
@@ -50,7 +49,7 @@
     .login-btn:hover{opacity:.88;}
     .login-err{font-size:12px;color:var(--red);min-height:18px;margin-top:8px;}
 
-    /* ── NAVBAR ── */
+    /* NAVBAR */
     .navbar{
       background:var(--surface);border-bottom:1px solid var(--border);
       padding:0 24px;height:58px;
@@ -76,7 +75,7 @@
 
     .main{padding:24px;max-width:860px;margin:0 auto;}
 
-    /* ── STATUS ── */
+    /* STATUS */
     .status-bar{
       display:flex;align-items:center;gap:10px;
       background:var(--surface);border:1px solid var(--border);
@@ -88,41 +87,42 @@
     .status-text{font-size:13px;font-weight:600;flex:1;}
     .status-mode{font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(124,77,255,.15);color:var(--purple);border:1px solid rgba(124,77,255,.3);}
 
-    /* ── GRAFICO ── */
+    /* GRAFICO */
     .chart-card{
       background:var(--surface);border:1px solid var(--border);
       border-radius:14px;padding:18px;margin-bottom:16px;
     }
-    .chart-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-    .chart-wrap{position:relative;height:130px;width:100%;}
-    #velChart{display:block;width:100%;height:100%;border-radius:8px;}
-    .chart-vel-label{
-      position:absolute;right:12px;top:50%;transform:translateY(-50%);
-      font-size:38px;font-weight:900;
-      background:linear-gradient(135deg,#7c4dff,#e040fb);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-      pointer-events:none;line-height:1;
+    .chart-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+    .chart-pattern-badge{
+      font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;
+      background:rgba(124,77,255,.15);color:var(--purple);border:1px solid rgba(124,77,255,.3);
+      text-transform:none;letter-spacing:0;transition:all .3s;
     }
-    .chart-vel-pct{font-size:16px;font-weight:400;opacity:.7;}
+    .chart-wrap{position:relative;height:150px;width:100%;}
+    #velChart{display:block;width:100%;height:100%;border-radius:8px;}
 
-    /* ── CARD ── */
+    /* CARD */
     .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;}
     .card-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;}
 
-    /* ── SLIDER ── */
+    /* SLIDER */
     .vel-display{text-align:center;margin-bottom:12px;}
     .vel-number{font-size:42px;font-weight:900;line-height:1;background:linear-gradient(135deg,#7c4dff,#e040fb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
     .vel-unit{font-size:13px;color:var(--muted);margin-top:2px;}
     .vel-slider{
-      width:100%;height:6px;border-radius:3px;
+      width:100%;height:8px;border-radius:4px;
       -webkit-appearance:none;appearance:none;
-      background:linear-gradient(to right,var(--purple) 0%,var(--purple2) var(--val,0%),var(--border) var(--val,0%));
-      outline:none;cursor:pointer;margin-bottom:12px;
+      background:linear-gradient(to right,var(--purple) 0%,var(--purple2) var(--val,0%),rgba(37,37,64,0.8) var(--val,0%));
+      outline:none;cursor:pointer;margin-bottom:16px;
+      touch-action:none;
     }
     .vel-slider::-webkit-slider-thumb{
-      -webkit-appearance:none;width:22px;height:22px;border-radius:50%;
-      background:#fff;box-shadow:0 2px 8px rgba(124,77,255,.6);cursor:pointer;
+      -webkit-appearance:none;width:28px;height:28px;border-radius:50%;
+      background:#fff;box-shadow:0 2px 12px rgba(124,77,255,.8);cursor:pointer;
+      transition:transform .1s;
     }
+    .vel-slider::-webkit-slider-thumb:hover{transform:scale(1.15);}
+    .vel-slider:active::-webkit-slider-thumb{transform:scale(1.2);}
     .vel-presets{display:flex;gap:6px;margin-bottom:14px;}
     .btn-preset{
       flex:1;padding:7px 0;background:var(--surface2);
@@ -133,16 +133,7 @@
     .btn-preset.zero{border-color:rgba(244,67,54,.4);color:var(--red);}
     .btn-preset.zero.active{background:var(--red);border-color:var(--red);color:#fff;}
 
-    /* ANSIOSO */
-    .btn-ansioso{
-      width:100%;padding:11px;
-      background:linear-gradient(135deg,#ff6b35,#ff1744);
-      border:none;border-radius:10px;color:#fff;
-      font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;
-    }
-    .btn-ansioso:hover{opacity:.88;}
-    .btn-ansioso.ativo{animation:pulse-red 1.5s infinite;}
-    @keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(255,23,68,.5)}50%{box-shadow:0 0 0 10px rgba(255,23,68,0)}}
+
 
     /* PADROES */
     .patterns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -191,7 +182,7 @@
 <!-- LOGIN -->
 <div id="loginWrap">
   <div class="login-card">
-    <div class="login-logo">🤖</div>
+    <div class="login-logo">&#129302;</div>
     <div class="login-title">Handy Control</div>
     <div class="login-sub">Digite seu token de acesso</div>
     <input id="tokenInput" type="text" placeholder="Ex: ABC-XYZ" autocomplete="off" spellcheck="false" maxlength="30">
@@ -203,7 +194,7 @@
 <!-- APP -->
 <div class="app" id="app">
   <nav class="navbar">
-    <div class="navbar-logo">🤖 Handy Control</div>
+    <div class="navbar-logo">&#129302; Handy Control</div>
     <div class="navbar-right">
       <div class="navbar-user" id="navUser"></div>
       <div class="timer-badge stopped hidden" id="timerBadge">00:00:00</div>
@@ -212,60 +203,53 @@
   </nav>
 
   <div class="main">
-    <!-- Status -->
     <div class="status-bar">
       <div class="status-dot" id="statusDot"></div>
-      <div class="status-text" id="statusText">Aguardando conexão...</div>
+      <div class="status-text" id="statusText">Aguardando conexao...</div>
       <div class="status-mode" id="statusMode">Parado</div>
     </div>
 
-    <!-- Gráfico de velocidade -->
     <div class="chart-card">
       <div class="chart-title">
-        📊 Velocidade em tempo real
-        <span id="chartPatternLabel" style="margin-left:auto;font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">Parado</span>
+        <span>Velocidade em tempo real</span>
+        <span class="chart-pattern-badge" id="chartPatternLabel">Parado</span>
       </div>
       <div class="chart-wrap">
         <canvas id="velChart"></canvas>
-        <div class="chart-vel-label" id="chartVelLabel">0<span class="chart-vel-pct">%</span></div>
       </div>
     </div>
 
-    <!-- Velocidade + Ansioso -->
     <div class="card">
-      <div class="card-title">⚡ Controle de velocidade</div>
+      <div class="card-title">Controle de velocidade</div>
       <div class="vel-display">
         <div class="vel-number" id="velNumber">0</div>
         <div class="vel-unit">% de velocidade</div>
       </div>
       <input type="range" class="vel-slider" id="velSlider" min="0" max="100" value="0" step="1">
       <div class="vel-presets">
-        <button class="btn-preset zero active" data-v="0">⏹ 0</button>
+        <button class="btn-preset zero active" data-v="0">0%</button>
         <button class="btn-preset" data-v="25">25%</button>
         <button class="btn-preset" data-v="50">50%</button>
         <button class="btn-preset" data-v="75">75%</button>
         <button class="btn-preset" data-v="100">100%</button>
       </div>
-      <button class="btn-ansioso" id="btnAnsioso">😈 Modo Ansioso (5%)</button>
     </div>
 
-    <!-- Padrões -->
     <div class="card">
-      <div class="card-title">🎵 Padrões de movimento</div>
+      <div class="card-title">Padroes de movimento</div>
       <div class="patterns">
-        <button class="btn-pattern active" data-pattern="steady"><span class="pat-icon">➡️</span><span class="pat-name">Constante</span><span class="pat-desc">Velocidade fixa</span></button>
-        <button class="btn-pattern" data-pattern="wave"><span class="pat-icon">〰️</span><span class="pat-name">Onda</span><span class="pat-desc">Sobe e desce</span></button>
-        <button class="btn-pattern" data-pattern="pulse"><span class="pat-icon">💓</span><span class="pat-name">Pulso</span><span class="pat-desc">Pulsos rápidos</span></button>
-        <button class="btn-pattern" data-pattern="random"><span class="pat-icon">🎲</span><span class="pat-name">Aleatório</span><span class="pat-desc">Velocidade variada</span></button>
-        <button class="btn-pattern" data-pattern="escalate"><span class="pat-icon">📈</span><span class="pat-name">Crescente</span><span class="pat-desc">Começa devagar</span></button>
-        <button class="btn-pattern" data-pattern="tease"><span class="pat-icon">😏</span><span class="pat-name">Tease</span><span class="pat-desc">Para e volta</span></button>
+        <button class="btn-pattern active" data-pattern="steady"><span class="pat-icon">&#10145;&#65039;</span><span class="pat-name">Constante</span><span class="pat-desc">Velocidade fixa</span></button>
+        <button class="btn-pattern" data-pattern="wave"><span class="pat-icon">&#12316;&#65039;</span><span class="pat-name">Onda</span><span class="pat-desc">Sobe e desce</span></button>
+        <button class="btn-pattern" data-pattern="pulse"><span class="pat-icon">&#128147;</span><span class="pat-name">Pulso</span><span class="pat-desc">Pulsos rapidos</span></button>
+        <button class="btn-pattern" data-pattern="random"><span class="pat-icon">&#127922;</span><span class="pat-name">Aleatorio</span><span class="pat-desc">Velocidade variada</span></button>
+        <button class="btn-pattern" data-pattern="escalate"><span class="pat-icon">&#128200;</span><span class="pat-name">Crescente</span><span class="pat-desc">Comeca devagar</span></button>
+        <button class="btn-pattern" data-pattern="tease"><span class="pat-icon">&#128527;</span><span class="pat-name">Tease</span><span class="pat-desc">Para e volta</span></button>
       </div>
     </div>
 
-    <!-- Admin -->
     <div class="hidden" id="adminSection">
       <div class="card">
-        <div class="card-title">🔐 Tokens ativos</div>
+        <div class="card-title">Tokens ativos</div>
         <div class="admin-grid" id="adminGrid"><div style="color:var(--muted);font-size:13px">Carregando...</div></div>
       </div>
     </div>
@@ -287,7 +271,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId:"000000000000",
   appId:"1:000000000000:web:000000000000000000000000"
 };
-const ADMIN_PASS = "padilha.iwerson\u00c7";
+const ADMIN_PASS = "padilha.iwersonÇ";
 
 const fbApp = initializeApp(FIREBASE_CONFIG);
 const db    = getDatabase(fbApp);
@@ -295,14 +279,14 @@ const db    = getDatabase(fbApp);
 const $ = id => document.getElementById(id);
 
 let session=null,isAdmin=false,timerInterval=null,timerDuration=0;
-let isRunning=false,ansiosoOn=false,currentPattern='steady',patternInterval=null;
+let isRunning=false,ansiosoOn=false,currentPattern="steady",patternInterval=null;
 
-// ── GRAFICO ────────────────────────────────────────────────────────────
-const canvas    = $('velChart');
-const ctx       = canvas ? canvas.getContext('2d') : null;
-const chartLabel= $('chartVelLabel');
-const chartPat  = $('chartPatternLabel');
-const HISTORY   = 80;   // pontos no gráfico
+// GRAFICO
+const canvas    = $("velChart");
+const ctx       = canvas ? canvas.getContext("2d") : null;
+const chartLabel= $("chartVelLabel");
+const chartPat  = $("chartPatternLabel");
+const HISTORY   = 80;
 let   velHistory= new Array(HISTORY).fill(0);
 let   chartRaf  = null;
 let   currentVel= 0;
@@ -313,283 +297,280 @@ function resizeChart(){
   canvas.width  = wrap.clientWidth;
   canvas.height = wrap.clientHeight;
 }
-window.addEventListener('resize', resizeChart);
+window.addEventListener("resize", resizeChart);
 
 function pushVel(v){
   velHistory.push(v);
   if(velHistory.length > HISTORY) velHistory.shift();
   currentVel = v;
-  if(chartLabel) chartLabel.innerHTML = v+'<span class="chart-vel-pct">%</span>';
+  if(chartLabel) chartLabel.innerHTML = v+"<span class="chart-vel-pct">%</span>";
 }
+
+// Cores por padrao
+const PATTERN_COLORS = {
+  steady:   {line:"rgba(124,77,255,1)",   fill:"rgba(124,77,255,0.22)"},
+  wave:     {line:"rgba(64,196,255,1)",    fill:"rgba(64,196,255,0.18)"},
+  pulse:    {line:"rgba(244,67,54,1)",     fill:"rgba(244,67,54,0.18)"},
+  random:   {line:"rgba(255,183,77,1)",    fill:"rgba(255,183,77,0.18)"},
+  escalate: {line:"rgba(129,199,132,1)",   fill:"rgba(129,199,132,0.18)"},
+  tease:    {line:"rgba(224,64,251,1)",    fill:"rgba(224,64,251,0.18)"},
+};
 
 function drawChart(){
   if(!ctx){ chartRaf=requestAnimationFrame(drawChart); return; }
   const W=canvas.width, H=canvas.height;
   ctx.clearRect(0,0,W,H);
 
-  // Grid lines
-  ctx.strokeStyle='rgba(255,255,255,0.04)';
+  // Grid
   ctx.lineWidth=1;
   [25,50,75].forEach(pct=>{
-    const y = H - (pct/100)*H;
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,0.15)';
-    ctx.font='9px system-ui';
-    ctx.fillText(pct+'%', 4, y-3);
+    const y=H-(pct/100)*(H*0.88)-H*0.06;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y);
+    ctx.strokeStyle="rgba(255,255,255,0.05)"; ctx.stroke();
+    ctx.fillStyle="rgba(255,255,255,0.18)";
+    ctx.font="9px system-ui"; ctx.fillText(pct+"%",4,y-3);
   });
 
-  // Linha do gráfico
+  const clr = PATTERN_COLORS[currentPattern]||PATTERN_COLORS.steady;
   const step = W/(HISTORY-1);
-  const grad = ctx.createLinearGradient(0,0,W,0);
-  grad.addColorStop(0,'rgba(124,77,255,0.3)');
-  grad.addColorStop(0.5,'rgba(224,64,251,0.9)');
-  grad.addColorStop(1,'rgba(124,77,255,1)');
 
+  // Linha principal
   ctx.beginPath();
   velHistory.forEach((v,i)=>{
-    const x = i*step;
-    const y = H - (v/100)*(H*0.85) - H*0.07;
-    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    const x=i*step;
+    const y=H-(v/100)*(H*0.88)-H*0.06;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
   });
-  ctx.strokeStyle=grad;
+  ctx.strokeStyle=clr.line;
   ctx.lineWidth=2.5;
-  ctx.lineJoin='round';
+  ctx.lineJoin="round";
+  ctx.lineCap="round";
   ctx.stroke();
 
   // Fill abaixo
-  ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
+  const lastX=(HISTORY-1)*step;
+  const lastY=H-(velHistory[HISTORY-1]/100)*(H*0.88)-H*0.06;
+  ctx.lineTo(lastX,H); ctx.lineTo(0,H); ctx.closePath();
   const fill=ctx.createLinearGradient(0,0,0,H);
-  fill.addColorStop(0,'rgba(124,77,255,0.25)');
-  fill.addColorStop(1,'rgba(124,77,255,0)');
-  ctx.fillStyle=fill;
-  ctx.fill();
+  fill.addColorStop(0,clr.fill);
+  fill.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=fill; ctx.fill();
 
   // Ponto atual
   if(currentVel>0){
-    const lx=(HISTORY-1)*step;
-    const ly=H-(currentVel/100)*(H*0.85)-H*0.07;
     ctx.beginPath();
-    ctx.arc(lx,ly,4,0,Math.PI*2);
-    ctx.fillStyle='#e040fb';
-    ctx.fill();
-    ctx.strokeStyle='#fff';
-    ctx.lineWidth=1.5;
-    ctx.stroke();
+    ctx.arc(lastX,lastY,5,0,Math.PI*2);
+    ctx.fillStyle=clr.line; ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,0.8)";
+    ctx.lineWidth=2; ctx.stroke();
   }
 
   chartRaf=requestAnimationFrame(drawChart);
 }
 
-// Empurra histórico a cada 500ms
-setInterval(()=>{ if(document.getElementById('app').style.display!=='none') pushVel(currentVel); },500);
+setInterval(()=>{ if(document.getElementById("app").style.display!=="none") pushVel(currentVel); },500);
 
-// ── LOGIN ──────────────────────────────────────────────────────────────
-const tokenInput = $('tokenInput');
-$('btnLogin').addEventListener('click', doLogin);
-tokenInput.addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+// LOGIN
+const tokenInput = $("tokenInput");
+$("btnLogin").addEventListener("click", doLogin);
+tokenInput.addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
 
 function doLogin(){
   const raw = tokenInput.value.trim();
-  const err = $('loginErr');
-  err.textContent='';
-  if(!raw){ err.textContent='Digite o token.'; return; }
-
-  // Admin — sem transformar case
-  if(raw===ADMIN_PASS){ session={code:'ADMIN',isAdmin:true}; isAdmin=true; enterApp(); return; }
-
-  // Token
+  const err = $("loginErr");
+  err.textContent="";
+  if(!raw){ err.textContent="Digite o token."; return; }
+  if(raw===ADMIN_PASS){ session={code:"ADMIN",isAdmin:true}; isAdmin=true; enterApp(); return; }
   const code=raw.toUpperCase();
-  err.textContent='Verificando...';
-  get(ref(db,'tokens/'+code)).then(snap=>{
-    if(!snap.exists()){ err.textContent='Token inválido.'; return; }
+  err.textContent="Verificando...";
+  get(ref(db,"tokens/"+code)).then(snap=>{
+    if(!snap.exists()){ err.textContent="Token invalido."; return; }
     const token=snap.val();
-    if(token.revoked){ err.textContent='Token revogado.'; return; }
+    if(token.revoked){ err.textContent="Token revogado."; return; }
     const now=Date.now();
-    if(token.activatedAt && now-token.activatedAt>token.duration){ err.textContent='Token expirado.'; return; }
+    if(token.activatedAt && now-token.activatedAt>token.duration){ err.textContent="Token expirado."; return; }
     session={code,token}; isAdmin=false; enterApp();
-  }).catch(()=>{ err.textContent='Erro de conexão.'; });
+  }).catch(()=>{ err.textContent="Erro de conexao."; });
 }
 
 function enterApp(){
-  $('loginWrap').style.display='none';
-  $('app').style.display='block';
-  $('navUser').textContent=isAdmin?'👑 Admin':'Token: '+session.code;
+  $("loginWrap").style.display="none";
+  $("app").style.display="block";
+  $("navUser").textContent=isAdmin?"Admin":"Token: "+session.code;
   if(!isAdmin){
-    const b=$('timerBadge'); b.classList.remove('hidden');
+    const b=$("timerBadge"); b.classList.remove("hidden");
     timerDuration=session.token.duration;
     b.textContent=formatTime(timerDuration);
   } else {
-    $('adminSection').classList.remove('hidden');
+    $("adminSection").classList.remove("hidden");
     loadAdminTokens();
   }
   listenHandyState();
   setTimeout(()=>{ resizeChart(); chartRaf=chartRaf||requestAnimationFrame(drawChart); },100);
 }
 
-// ── TIMER ──────────────────────────────────────────────────────────────
+// TIMER
 function startTimer(){
   if(timerInterval) return;
   if(!session.token.activatedAt){
     session.token.activatedAt=Date.now();
-    update(ref(db,'tokens/'+session.code),{activatedAt:session.token.activatedAt});
+    update(ref(db,"tokens/"+session.code),{activatedAt:session.token.activatedAt});
   }
   timerInterval=setInterval(tickTimer,1000); tickTimer();
 }
 function pauseTimer(){
   if(!timerInterval) return;
   clearInterval(timerInterval); timerInterval=null;
-  $('timerBadge').classList.add('stopped');
+  $("timerBadge").classList.add("stopped");
 }
 function tickTimer(){
   const used=session.token.activatedAt?(Date.now()-session.token.activatedAt):0;
   const rem=Math.max(0,timerDuration-used);
-  const b=$('timerBadge');
-  b.textContent=formatTime(rem); b.classList.remove('stopped');
-  if(rem<300000) b.classList.add('urgent');
+  const b=$("timerBadge");
+  b.textContent=formatTime(rem); b.classList.remove("stopped");
+  if(rem<300000) b.classList.add("urgent");
   if(rem<=0){ clearInterval(timerInterval); timerInterval=null; doStop(); setTimeout(logout,3000); }
 }
 function formatTime(ms){
   const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
-  return (h?String(h).padStart(2,'0')+':':'')+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+  return (h?String(h).padStart(2,"0")+":":"")+String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");
 }
 
-// ── ESTADO ─────────────────────────────────────────────────────────────
+// ESTADO
 function listenHandyState(){
-  onValue(ref(db,'handy/state'),snap=>{
+  onValue(ref(db,"handy/state"),snap=>{
     const s=snap.val()||{};
-    $('statusDot').className='status-dot '+(s.online?'online':'offline');
-    $('statusText').textContent=s.online?'Handy conectado':'Handy offline';
-    $('statusMode').textContent=s.mode||'Parado';
+    $("statusDot").className="status-dot "+(s.online?"online":"offline");
+    $("statusText").textContent=s.online?"Handy conectado":"Handy offline";
+    $("statusMode").textContent=s.mode||"Parado";
   });
 }
 
-// ── SLIDER ─────────────────────────────────────────────────────────────
-const slider=$('velSlider'), velNum=$('velNumber');
+// SLIDER
+const slider=$("velSlider"), velNum=$("velNumber");
 
 function setVel(v){
   v=Math.max(0,Math.min(100,v));
   slider.value=v; velNum.textContent=v;
-  slider.style.setProperty('--val',v+'%');
+  slider.style.setProperty("--val",v+"%");
   currentVel=v;
-  document.querySelectorAll('.btn-preset').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.v)===v));
+  document.querySelectorAll(".btn-preset").forEach(b=>b.classList.toggle("active",parseInt(b.dataset.v)===v));
   if(v===0){ if(isRunning||ansiosoOn) doStop(); }
   else {
     if(!isRunning&&!ansiosoOn){
       isRunning=true; stopPatternLoop(); startPatternLoop(currentPattern,v);
-      sendCmd({type:'start',velocity:v,pattern:currentPattern});
+      sendCmd({type:"start",velocity:v,pattern:currentPattern});
       startTimer();
-    } else sendCmd({type:'velocity',value:v});
+      const activeBtn=document.querySelector(".btn-pattern.active");
+      if(activeBtn) updatePatternBadge(activeBtn.querySelector(".pat-name").textContent);
+    } else sendCmd({type:"velocity",value:v});
   }
 }
 
-slider.addEventListener('input',()=>setVel(parseInt(slider.value)));
-document.querySelectorAll('.btn-preset').forEach(btn=>{
-  btn.addEventListener('click',()=>setVel(parseInt(btn.dataset.v)));
-});
-
-// ── ANSIOSO ────────────────────────────────────────────────────────────
-$('btnAnsioso').addEventListener('click',()=>{
-  ansiosoOn=!ansiosoOn;
-  const btn=$('btnAnsioso');
-  if(ansiosoOn){
-    isRunning=false; stopPatternLoop();
-    btn.textContent='🛑 Parar Modo Ansioso'; btn.classList.add('ativo');
-    sendCmd({type:'ansioso',active:true}); startTimer();
-    currentVel=5;
-    showToast('info','😈 Modo Ansioso ativo');
-  } else { doStop(); showToast('ok','⏹ Modo Ansioso parado'); }
+slider.addEventListener("input",()=>setVel(parseInt(slider.value)));
+document.querySelectorAll(".btn-preset").forEach(btn=>{
+  btn.addEventListener("click",()=>setVel(parseInt(btn.dataset.v)));
 });
 
 function doStop(){
   isRunning=false; ansiosoOn=false; stopPatternLoop();
-  const btn=$('btnAnsioso');
-  btn.textContent='😈 Modo Ansioso (5%)'; btn.classList.remove('ativo');
-  sendCmd({type:'stop'}); pauseTimer();
+  sendCmd({type:"stop"}); pauseTimer();
   currentVel=0;
-  document.querySelectorAll('.btn-preset').forEach(b=>b.classList.remove('active'));
-  document.querySelector('.btn-preset.zero').classList.add('active');
-  velNum.textContent=0; slider.value=0; slider.style.setProperty('--val','0%');
+  document.querySelectorAll(".btn-preset").forEach(b=>b.classList.remove("active"));
+  document.querySelector(".btn-preset.zero").classList.add("active");
+  velNum.textContent=0; slider.value=0; slider.style.setProperty("--val","0%");
+  updatePatternBadge("Parado");
 }
 
-// ── PADROES ────────────────────────────────────────────────────────────
-document.querySelectorAll('.btn-pattern').forEach(btn=>{
-  btn.addEventListener('click',()=>{
+// PADROES
+document.querySelectorAll(".btn-pattern").forEach(btn=>{
+  btn.addEventListener("click",()=>{
     currentPattern=btn.dataset.pattern;
-    document.querySelectorAll('.btn-pattern').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    if(chartPat) chartPat.textContent=btn.querySelector('.pat-name').textContent;
-    if(isRunning){ stopPatternLoop(); startPatternLoop(currentPattern,currentVel); sendCmd({type:'start',velocity:currentVel,pattern:currentPattern}); }
+    document.querySelectorAll(".btn-pattern").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    const name=btn.querySelector(".pat-name").textContent;
+    updatePatternBadge(name);
+    if(isRunning){ stopPatternLoop(); startPatternLoop(currentPattern,currentVel); sendCmd({type:"start",velocity:currentVel,pattern:currentPattern}); }
   });
 });
 
 function startPatternLoop(pat,baseVel){
   stopPatternLoop();
-  if(pat==='steady') return;
+  if(pat==="steady") return;
   let tick=0,high=true,cur=5;
   patternInterval=setInterval(()=>{
     let v=baseVel;
-    if(pat==='wave')     v=Math.round(baseVel*.5+baseVel*.5*Math.sin(tick+=.2));
-    else if(pat==='pulse')    { v=high?baseVel:Math.max(5,Math.round(baseVel*.3)); high=!high; }
-    else if(pat==='random')   v=Math.max(5,Math.round(Math.random()*baseVel));
-    else if(pat==='escalate') { cur=Math.min(baseVel,cur+3); v=cur; }
-    else if(pat==='tease')    { tick++; if(tick%5===0)high=!high; v=high?baseVel:1; }
+    if(pat==="wave")     v=Math.round(baseVel*.5+baseVel*.5*Math.sin(tick+=.2));
+    else if(pat==="pulse")    { v=high?baseVel:Math.max(5,Math.round(baseVel*.3)); high=!high; }
+    else if(pat==="random")   v=Math.max(5,Math.round(Math.random()*baseVel));
+    else if(pat==="escalate") { cur=Math.min(baseVel,cur+3); v=cur; }
+    else if(pat==="tease")    { tick++; if(tick%5===0)high=!high; v=high?baseVel:1; }
     v=Math.max(1,Math.min(100,v));
-    currentVel=v; sendCmd({type:'velocity',value:v});
+    currentVel=v; sendCmd({type:"velocity",value:v});
   },800);
 }
 function stopPatternLoop(){ if(patternInterval){ clearInterval(patternInterval); patternInterval=null; } }
 
-async function sendCmd(cmd){ await set(ref(db,'handy/command'),{...cmd,from:session.code,ts:Date.now()}); }
+function updatePatternBadge(name){
+  const el=document.getElementById("chartPatternLabel");
+  if(!el) return;
+  el.textContent=name;
+  const clr=PATTERN_COLORS[currentPattern]||PATTERN_COLORS.steady;
+  // Extrai cor base da linha para usar no badge
+  const rgb=clr.line.replace("rgba(","").split(",");
+  el.style.background="rgba("+rgb[0]+","+rgb[1]+","+rgb[2]+",0.12)";
+  el.style.color=clr.line;
+  el.style.borderColor="rgba("+rgb[0]+","+rgb[1]+","+rgb[2]+",0.4)";
+}
 
-// ── ADMIN ──────────────────────────────────────────────────────────────
+async function sendCmd(cmd){ await set(ref(db,"handy/command"),{...cmd,from:session.code,ts:Date.now()}); }
+
+// ADMIN
 async function loadAdminTokens(){
-  const grid=$('adminGrid');
-  const snap=await get(ref(db,'tokens'));
-  grid.innerHTML='';
-  if(!snap.exists()){ grid.innerHTML='<div style="color:var(--muted);font-size:13px">Nenhum token ainda.</div>'; return; }
+  const grid=$("adminGrid");
+  const snap=await get(ref(db,"tokens"));
+  grid.innerHTML="";
+  if(!snap.exists()){ grid.innerHTML="<div style=\"color:var(--muted);font-size:13px\">Nenhum token ainda.</div>"; return; }
   const now=Date.now();
   snap.forEach(child=>{
     const t=child.val();
     let cls,label;
-    if(t.revoked){cls='expired';label='Revogado';}
-    else if(!t.activatedAt){cls='pending';label='Aguardando';}
-    else if(now-t.activatedAt>t.duration){cls='expired';label='Expirado';}
-    else{cls='active';label='Ativo';}
+    if(t.revoked){cls="expired";label="Revogado";}
+    else if(!t.activatedAt){cls="pending";label="Aguardando";}
+    else if(now-t.activatedAt>t.duration){cls="expired";label="Expirado";}
+    else{cls="active";label="Ativo";}
     const used=t.activatedAt?Math.max(0,now-t.activatedAt):0;
     const rem=Math.max(0,t.duration-used);
-    const div=document.createElement('div');
-    div.className='token-card';
-    div.innerHTML=`<div class="token-code">${t.code}</div>
-      <div class="token-info">Duração: ${(t.duration/60000).toFixed(0)}min<br>Restante: ${formatTime(rem)}<br>
-      <span class="token-badge ${cls}">${label}</span></div>
-      <button class="btn-revoke" data-code="${t.code}">Revogar</button>`;
-    div.querySelector('.btn-revoke').onclick=async()=>{
-      await update(ref(db,'tokens/'+t.code),{revoked:true});
-      showToast('ok','Token '+t.code+' revogado'); loadAdminTokens();
+    const div=document.createElement("div");
+    div.className="token-card";
+    div.innerHTML="<div class=\"token-code\">"+t.code+"</div><div class=\"token-info\">Duracao: "+(t.duration/60000).toFixed(0)+"min<br>Restante: "+formatTime(rem)+"<br><span class=\"token-badge "+cls+"\">"+label+"</span></div><button class=\"btn-revoke\" data-code=\""+t.code+"\">Revogar</button>";
+    div.querySelector(".btn-revoke").onclick=async()=>{
+      await update(ref(db,"tokens/"+t.code),{revoked:true});
+      showToast("ok","Token "+t.code+" revogado"); loadAdminTokens();
     };
     grid.appendChild(div);
   });
 }
 
-// ── LOGOUT ─────────────────────────────────────────────────────────────
+// LOGOUT
 function logout(){
   clearInterval(timerInterval); timerInterval=null;
   stopPatternLoop(); cancelAnimationFrame(chartRaf); chartRaf=null;
   isRunning=false; ansiosoOn=false; session=null; isAdmin=false;
   currentVel=0; velHistory.fill(0);
-  $('loginWrap').style.display='flex';
-  $('app').style.display='none';
-  tokenInput.value=''; $('loginErr').textContent='';
-  $('timerBadge').classList.add('hidden');
-  $('adminSection').classList.add('hidden');
+  $("loginWrap").style.display="flex";
+  $("app").style.display="none";
+  tokenInput.value=""; $("loginErr").textContent="";
+  $("timerBadge").classList.add("hidden");
+  $("adminSection").classList.add("hidden");
 }
-$('btnLogout').addEventListener('click',logout);
+$("btnLogout").addEventListener("click",logout);
 
-// ── TOAST ──────────────────────────────────────────────────────────────
+// TOAST
 let toastT;
 function showToast(type,msg){
-  const t=$('toast'); t.textContent=msg; t.className='toast '+type+' show';
-  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3000);
+  const t=$("toast"); t.textContent=msg; t.className="toast "+type+" show";
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),3000);
 }
 </script>
 </body>
