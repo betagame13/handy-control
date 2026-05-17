@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.3</div>
+<div class="version-tag">v1.2.4</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -301,7 +301,7 @@ const db    = getDatabase(fbApp);
 const $ = id => document.getElementById(id);
 
 let session=null,isAdmin=false,timerInterval=null,timerDuration=0;
-let isRunning=false,ansiosoOn=false,currentPattern="steady",patternInterval=null;
+let isRunning=false,ansiosoOn=false,currentPattern="steady",patternInterval=null,currentBaseVel=50;
 
 // GRAFICO — renderizacao fluida 60fps com interpolacao bezier
 const canvas = $("velChart");
@@ -379,88 +379,114 @@ function drawChart(){
   const W   = canvas.width  / dpr;
   const H   = canvas.height / dpr;
   if(W < 10 || H < 10) return;
-  const now = performance.now();
 
-  ctx.clearRect(0, 0, W * dpr, H * dpr);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Grid sempre visivel
+  // Grid
   [25, 50, 75].forEach(pct => {
     const y = velY(pct, H);
     ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y);
-    ctx.strokeStyle = "rgba(255,255,255,0.07)"; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.font="10px system-ui";
+    ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.font="9px system-ui";
     ctx.fillText(pct+"%", 6, y-4);
   });
 
-  if(samples.length < 2) return;
+  const clr  = PATTERN_COLORS[currentPattern] || PATTERN_COLORS.steady;
+  const now  = performance.now() / 1000;
+  const isWave = currentPattern === "wave" && (isRunning || ansiosoOn);
 
-  const clr    = PATTERN_COLORS[currentPattern] || PATTERN_COLORS.steady;
-  const tStart = now - WINDOW_MS;
+  if(isWave){
+    // Onda desenhada matematicamente pixel a pixel — zero escadinha
+    const amp    = currentBaseVel / 100; // amplitude 0-1
+    const freq   = 0.8;                  // ciclos por segundo
+    const offset = now * freq * Math.PI * 2; // fase atual
 
-  // Converte amostras em pontos XY
-  const pts = samples
-    .map(s => ({ x: ((s.t - tStart) / WINDOW_MS) * W, y: velY(s.v, H) }))
-    .filter(p => p.x >= -20);
-
-  if(pts.length < 2) return;
-
-  // Spline adaptativo: suave para mudancas graduais, reto para mudancas bruscas
-  ctx.beginPath();
-  ctx.moveTo(pts[0].x, pts[0].y);
-
-  for(let i = 0; i < pts.length - 1; i++){
-    const p0 = pts[Math.max(i-1, 0)];
-    const p1 = pts[i];
-    const p2 = pts[i+1];
-    const p3 = pts[Math.min(i+2, pts.length-1)];
-
-    // Calcula o quanto os valores mudam (em % de altura)
-    const jumpCurr = Math.abs(p2.y - p1.y) / H;
-    const jumpPrev = Math.abs(p1.y - p0.y) / H;
-    const jumpNext = Math.abs(p3.y - p2.y) / H;
-
-    // Se mudanca brusca (>15% da altura) usa linha reta — sem chifres
-    if(jumpCurr > 0.30 || jumpPrev > 0.30 || jumpNext > 0.30){
-      ctx.lineTo(p2.x, p2.y);
-    } else {
-      // Mudanca gradual — usa Catmull-Rom suave
-      const tension = 0.4;
-      const cp1x = p1.x + (p2.x - p0.x) * tension / 3;
-      const cp1y = p1.y + (p2.y - p0.y) * tension / 3;
-      const cp2x = p2.x - (p3.x - p1.x) * tension / 3;
-      const cp2y = p2.y - (p3.y - p1.y) * tension / 3;
-      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+    ctx.beginPath();
+    for(let x = 0; x <= W; x++){
+      // Cada pixel x corresponde a um momento no passado
+      const t    = ((W - x) / W) * WINDOW_MS / 1000; // segundos atras
+      const norm = (Math.sin((now - t) * freq * Math.PI * 2) + 1) / 2;
+      const v    = norm * amp * 100;
+      const y    = velY(v, H);
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
-  }
+    ctx.strokeStyle = clr.line;
+    ctx.lineWidth   = 2.5;
+    ctx.lineJoin    = "round";
+    ctx.lineCap     = "round";
+    ctx.stroke();
 
-  ctx.strokeStyle = clr.line;
-  ctx.lineWidth   = 2.5;
-  ctx.lineJoin    = "round";
-  ctx.lineCap     = "round";
-  ctx.stroke();
+    // Fill
+    ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0,   clr.fill);
+    grad.addColorStop(1,   "rgba(0,0,0,0)");
+    ctx.fillStyle = grad; ctx.fill();
 
-  // Fill suave abaixo da curva
-  const last = pts[pts.length-1];
-  const first = pts[0];
-  ctx.lineTo(last.x, H);
-  ctx.lineTo(first.x, H);
-  ctx.closePath();
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0,   clr.fill);
-  grad.addColorStop(0.6, clr.fill.replace(/[\d.]+\)$/, "0.06)"));
-  grad.addColorStop(1,   "rgba(0,0,0,0)");
-  ctx.fillStyle = grad; ctx.fill();
-
-  // Ponto pulsante na ponta
-  if(currentVel > 0){
-    const pulse = 0.65 + 0.35 * Math.sin(now * 0.007);
-    ctx.beginPath();
-    ctx.arc(last.x, last.y, 4, 0, Math.PI*2);
+    // Ponto pulsante na ponta
+    const lastNorm = (Math.sin(now * freq * Math.PI * 2) + 1) / 2;
+    const lastV    = lastNorm * amp * 100;
+    const lastY    = velY(lastV, H);
+    const pulse    = 0.65 + 0.35 * Math.sin(performance.now() * 0.007);
+    ctx.beginPath(); ctx.arc(W, lastY, 4, 0, Math.PI*2);
     ctx.fillStyle = clr.line; ctx.fill();
-    ctx.beginPath();
-    ctx.arc(last.x, last.y, 8 * pulse, 0, Math.PI*2);
+    ctx.beginPath(); ctx.arc(W, lastY, 8*pulse, 0, Math.PI*2);
     ctx.strokeStyle = clr.line.replace(/[\d.]+\)$/, "0.25)");
     ctx.lineWidth = 1.5; ctx.stroke();
+
+  } else {
+    // Outros padroes — usa amostras com Catmull-Rom
+    if(samples.length < 2) return;
+    const tStart = performance.now() - WINDOW_MS;
+    const pts = samples
+      .map(s => ({ x: ((s.t - tStart) / WINDOW_MS) * W, y: velY(s.v, H) }))
+      .filter(p => p.x >= -20);
+    if(pts.length < 2) return;
+
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for(let i = 0; i < pts.length - 1; i++){
+      const p0 = pts[Math.max(i-1, 0)];
+      const p1 = pts[i];
+      const p2 = pts[i+1];
+      const p3 = pts[Math.min(i+2, pts.length-1)];
+      const jumpCurr = Math.abs(p2.y - p1.y) / H;
+      const jumpPrev = Math.abs(p1.y - p0.y) / H;
+      const jumpNext = Math.abs(p3.y - p2.y) / H;
+      if(jumpCurr > 0.15 || jumpPrev > 0.15 || jumpNext > 0.15){
+        ctx.lineTo(p2.x, p2.y);
+      } else {
+        const tension = 0.4;
+        const cp1x = p1.x + (p2.x - p0.x) * tension / 3;
+        const cp1y = p1.y + (p2.y - p0.y) * tension / 3;
+        const cp2x = p2.x - (p3.x - p1.x) * tension / 3;
+        const cp2y = p2.y - (p3.y - p1.y) * tension / 3;
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+      }
+    }
+    ctx.strokeStyle = clr.line;
+    ctx.lineWidth   = 2.5;
+    ctx.lineJoin    = "round";
+    ctx.lineCap     = "round";
+    ctx.stroke();
+
+    const last  = pts[pts.length-1];
+    const first = pts[0];
+    ctx.lineTo(last.x, H); ctx.lineTo(first.x, H); ctx.closePath();
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0,   clr.fill);
+    grad.addColorStop(0.6, clr.fill.replace(/[\d.]+\)$/, "0.06)"));
+    grad.addColorStop(1,   "rgba(0,0,0,0)");
+    ctx.fillStyle = grad; ctx.fill();
+
+    if(currentVel > 0){
+      const pulse = 0.65 + 0.35 * Math.sin(performance.now() * 0.007);
+      ctx.beginPath(); ctx.arc(last.x, last.y, 4, 0, Math.PI*2);
+      ctx.fillStyle = clr.line; ctx.fill();
+      ctx.beginPath(); ctx.arc(last.x, last.y, 8*pulse, 0, Math.PI*2);
+      ctx.strokeStyle = clr.line.replace(/[\d.]+\)$/, "0.25)");
+      ctx.lineWidth = 1.5; ctx.stroke();
+    }
   }
 }
 
@@ -599,7 +625,7 @@ function listenHandyState(){
 // SLIDER
 const slider=$("velSlider"), velNum=$("velNumber");
 
-function setVel(v){
+function setVel(v){ currentBaseVel = v;
   v=Math.max(0,Math.min(100,v));
   slider.value=v; velNum.textContent=v;
   slider.style.setProperty("--val",v+"%");
