@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.1.8</div>
+<div class="version-tag">v1.1.9</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -352,7 +352,7 @@ function stopChartLoop(){
 
 function startSampling(){
   if(sampleInterval) return;
-  sampleInterval = setInterval(()=> pushVel(currentVel), 30);
+  sampleInterval = setInterval(()=> pushVel(currentVel), 16);
 }
 
 // Cores por padrao
@@ -696,14 +696,13 @@ function startPatternLoop(pat, baseVel){
   }
 
   let tick=0, high=true, cur=5;
-  const interval = pat==="tease" ? 1200 : pat==="wave" ? 150 : 800;
+  const interval = pat==="tease" ? 1200 : pat==="wave" ? 50 : 800;
 
   patternInterval = setInterval(()=>{
     let v = baseVel;
 
     if(pat==="wave"){
-      tick += 0.015;
-      // Senoidal normalizada: vai de 0 ate baseVel (slider = amplitude maxima)
+      tick += 0.04; // mais rapido
       const norm = (Math.sin(tick * Math.PI * 2) + 1) / 2;
       v = Math.round(norm * baseVel);
       v = Math.max(0, Math.min(100, v));
