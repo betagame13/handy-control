@@ -265,7 +265,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.0.7</div>
+<div class="version-tag">v1.0.8</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -290,39 +290,54 @@ const $ = id => document.getElementById(id);
 let session=null,isAdmin=false,timerInterval=null,timerDuration=0;
 let isRunning=false,ansiosoOn=false,currentPattern="steady",patternInterval=null;
 
-// GRAFICO
-const canvas    = $("velChart");
-const ctx       = canvas ? canvas.getContext("2d") : null;
-const chartPat  = $("chartPatternLabel");
-const HISTORY   = 120;
-let   velHistory= new Array(HISTORY).fill(0);
-let   currentVel= 0;
-let   chartRaf  = null;
+// GRAFICO — renderizacao fluida 60fps com interpolacao bezier
+const canvas = $("velChart");
+const ctx    = canvas ? canvas.getContext("2d") : null;
+const chartPat = $("chartPatternLabel");
+
+// Buffer circular de amostras em tempo real
+const SAMPLE_RATE = 50;   // ms entre amostras
+const WINDOW_MS   = 8000; // 8 segundos visíveis
+let   samples     = [];   // [{t, v}]
+let   currentVel  = 0;
+let   chartRaf    = null;
 let   sampleInterval = null;
 
 function resizeChart(){
   if(!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
   const wrap = canvas.parentElement;
-  canvas.width  = wrap.clientWidth  * (window.devicePixelRatio||1);
-  canvas.height = wrap.clientHeight * (window.devicePixelRatio||1);
-  ctx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1);
+  canvas.width  = wrap.clientWidth  * dpr;
+  canvas.height = wrap.clientHeight * dpr;
+  canvas.style.width  = wrap.clientWidth  + "px";
+  canvas.style.height = wrap.clientHeight + "px";
+  if(ctx) ctx.scale(dpr, dpr);
 }
-window.addEventListener("resize", ()=>{ resizeChart(); });
+window.addEventListener("resize", resizeChart);
 
-function pushVel(v){ velHistory.push(v); if(velHistory.length>HISTORY) velHistory.shift(); }
+function pushVel(v){
+  const now = performance.now();
+  samples.push({t: now, v: v});
+  // Descarta amostras mais antigas que a janela
+  const cutoff = now - WINDOW_MS - 500;
+  while(samples.length > 0 && samples[0].t < cutoff) samples.shift();
+}
 
 function startChartLoop(){
   if(chartRaf) return;
-  (function loop(){ drawChart(); chartRaf=requestAnimationFrame(loop); })();
+  (function loop(){
+    drawChart();
+    chartRaf = requestAnimationFrame(loop);
+  })();
 }
 
 function stopChartLoop(){
-  if(chartRaf){ cancelAnimationFrame(chartRaf); chartRaf=null; }
+  if(chartRaf){ cancelAnimationFrame(chartRaf); chartRaf = null; }
 }
 
 function startSampling(){
   if(sampleInterval) return;
-  sampleInterval=setInterval(()=>pushVel(currentVel), 100);
+  sampleInterval = setInterval(()=> pushVel(currentVel), SAMPLE_RATE);
 }
 
 // Cores por padrao
@@ -337,55 +352,81 @@ const PATTERN_COLORS = {
 
 function drawChart(){
   if(!ctx || !canvas.width) return;
-  const W=canvas.offsetWidth || canvas.width;
-  const H=canvas.offsetHeight || canvas.height;
-  ctx.clearRect(0,0,W,H);
+  const W = canvas.width  / (window.devicePixelRatio||1);
+  const H = canvas.height / (window.devicePixelRatio||1);
+  const now = performance.now();
 
-  // Grid
-  ctx.lineWidth=1;
-  [25,50,75].forEach(pct=>{
-    const y=H-(pct/100)*(H*0.88)-H*0.06;
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y);
-    ctx.strokeStyle="rgba(255,255,255,0.05)"; ctx.stroke();
-    ctx.fillStyle="rgba(255,255,255,0.18)";
-    ctx.font="9px system-ui"; ctx.fillText(pct+"%",4,y-3);
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid horizontal suave
+  ctx.lineWidth = 1;
+  [25, 50, 75, 100].forEach(pct => {
+    const y = H - (pct/100) * H * 0.9 - H * 0.05;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y);
+    ctx.strokeStyle = pct===100 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.05)";
+    ctx.stroke();
+    if(pct < 100){
+      ctx.fillStyle = "rgba(255,255,255,0.2)";
+      ctx.font = "9px system-ui";
+      ctx.fillText(pct+"%", 4, y - 3);
+    }
   });
 
-  const clr = PATTERN_COLORS[currentPattern]||PATTERN_COLORS.steady;
-  const step = W/(HISTORY-1);
+  if(samples.length < 2) return;
 
-  // Linha principal
+  const clr = PATTERN_COLORS[currentPattern] || PATTERN_COLORS.steady;
+
+  // Mapeia amostras para coordenadas X/Y usando tempo real
+  const tStart = now - WINDOW_MS;
+  const pts = samples.map(s => ({
+    x: ((s.t - tStart) / WINDOW_MS) * W,
+    y: H - (s.v / 100) * H * 0.9 - H * 0.05
+  })).filter(p => p.x >= -10);
+
+  if(pts.length < 2) return;
+
+  // Desenha linha com curvas bezier suaves (igual Lovense)
   ctx.beginPath();
-  velHistory.forEach((v,i)=>{
-    const x=i*step;
-    const y=H-(v/100)*(H*0.88)-H*0.06;
-    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-  });
-  ctx.strokeStyle=clr.line;
-  ctx.lineWidth=2.5;
-  ctx.lineJoin="round";
-  ctx.lineCap="round";
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for(let i = 1; i < pts.length; i++){
+    const prev = pts[i-1];
+    const curr = pts[i];
+    const cpx  = (prev.x + curr.x) / 2;
+    ctx.bezierCurveTo(cpx, prev.y, cpx, curr.y, curr.x, curr.y);
+  }
+  ctx.strokeStyle = clr.line;
+  ctx.lineWidth   = 2.5;
+  ctx.lineJoin    = "round";
+  ctx.lineCap     = "round";
   ctx.stroke();
 
-  // Fill abaixo
-  const lastX=(HISTORY-1)*step;
-  const lastY=H-(velHistory[HISTORY-1]/100)*(H*0.88)-H*0.06;
-  ctx.lineTo(lastX,H); ctx.lineTo(0,H); ctx.closePath();
-  const fill=ctx.createLinearGradient(0,0,0,H);
-  fill.addColorStop(0,clr.fill);
-  fill.addColorStop(1,"rgba(0,0,0,0)");
-  ctx.fillStyle=fill; ctx.fill();
+  // Fill gradiente abaixo
+  const last = pts[pts.length-1];
+  ctx.lineTo(last.x, H);
+  ctx.lineTo(pts[0].x, H);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0,   clr.fill);
+  grad.addColorStop(0.7, clr.fill.replace(/[\d.]+\)$/, "0.05)"));
+  grad.addColorStop(1,   "rgba(0,0,0,0)");
+  ctx.fillStyle = grad;
+  ctx.fill();
 
-  // Ponto atual
-  if(currentVel>0){
+  // Ponto animado na ponta direita
+  if(currentVel > 0){
+    const pulse = 0.6 + 0.4 * Math.sin(now * 0.006);
     ctx.beginPath();
-    ctx.arc(lastX,lastY,5,0,Math.PI*2);
-    ctx.fillStyle=clr.line; ctx.fill();
-    ctx.strokeStyle="rgba(255,255,255,0.8)";
-    ctx.lineWidth=2; ctx.stroke();
+    ctx.arc(last.x, last.y, 4 * pulse, 0, Math.PI*2);
+    ctx.fillStyle = clr.line;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(last.x, last.y, 7 * pulse, 0, Math.PI*2);
+    ctx.strokeStyle = clr.line.replace(/[\d.]+\)$/, "0.3)");
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
   }
-
 }
+
 
 // amostras via setVel e patternLoop
 
@@ -611,7 +652,7 @@ function logout(){
   stopPatternLoop(); stopChartLoop();
   if(sampleInterval){ clearInterval(sampleInterval); sampleInterval=null; }
   isRunning=false; ansiosoOn=false; session=null; isAdmin=false;
-  currentVel=0; velHistory.fill(0);
+  currentVel=0; samples=[];
   $("loginWrap").style.display="flex";
   $("app").style.display="none";
   tokenInput.value=""; $("loginErr").textContent="";
