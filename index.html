@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.1.9</div>
+<div class="version-tag">v1.2.0</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -696,17 +696,19 @@ function startPatternLoop(pat, baseVel){
   }
 
   let tick=0, high=true, cur=5;
-  const interval = pat==="tease" ? 1200 : pat==="wave" ? 50 : 800;
+  const interval = pat==="tease" ? 1200 : pat==="wave" ? 30 : 800;
 
   patternInterval = setInterval(()=>{
     let v = baseVel;
 
     if(pat==="wave"){
-      tick += 0.04; // mais rapido
+      tick += 0.04;
       const norm = (Math.sin(tick * Math.PI * 2) + 1) / 2;
-      v = Math.round(norm * baseVel);
-      v = Math.max(0, Math.min(100, v));
-      if(v < 2){ currentVel=0; sendCmd({type:"stop"}); return; }
+      const vf = norm * baseVel; // sem arredondamento
+      currentVel = vf;
+      if(vf < 2){ sendCmd({type:"stop"}); return; }
+      sendCmd({type:"velocity", value: Math.round(vf)}); // Handy precisa inteiro mas grafico usa float
+      return;
     }
     else if(pat==="pulse"){
       // Seno de frequencia 2x a onda — picos suaves e rapidos
