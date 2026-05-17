@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.1</div>
+<div class="version-tag">v1.2.3</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -332,8 +332,16 @@ window.addEventListener("resize", resizeChart);
 
 function pushVel(v){
   const now = performance.now();
+  // Interpolacao linear entre ultimo e atual — elimina escadinha visual
+  if(samples.length > 0){
+    const last = samples[samples.length - 1];
+    const steps = 4;
+    for(let i = 1; i < steps; i++){
+      const frac = i / steps;
+      samples.push({ t: last.t + (now - last.t) * frac, v: last.v + (v - last.v) * frac });
+    }
+  }
   samples.push({t: now, v: v});
-  // Descarta amostras mais antigas que a janela
   const cutoff = now - WINDOW_MS - 500;
   while(samples.length > 0 && samples[0].t < cutoff) samples.shift();
 }
@@ -704,7 +712,7 @@ function startPatternLoop(pat, baseVel){
     if(pat==="wave"){
       // Onda calculada via tempo real — completamente lisa
       const t    = performance.now() / 1000; // segundos
-      const norm = (Math.sin(t * Math.PI * 0.4) + 1) / 2; // ciclo ~5s
+      const norm = (Math.sin(t * Math.PI * 0.8) + 1) / 2; // ciclo ~2.5s rapido e suave
       const vf   = norm * baseVel;
       currentVel = vf;
       if(vf < 2){ sendCmd({type:"stop"}); return; }
