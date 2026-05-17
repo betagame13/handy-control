@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.1.7</div>
+<div class="version-tag">v1.1.8</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -652,7 +652,7 @@ document.querySelectorAll(".btn-pattern").forEach(btn=>{
 });
 
 // Padroes que ignoram o slider e usam 0-100% proprios
-const LOCKED_PATTERNS = ["tease","random"];
+const LOCKED_PATTERNS = ["tease","random"]; // onda usa slider como amplitude maxima
 
 function isPatternLocked(pat){ return LOCKED_PATTERNS.indexOf(pat) !== -1; }
 
@@ -673,7 +673,7 @@ function updateSliderLock(pat){
     if(h){ h.textContent="Manual: você controla direto pelo slider"; h.classList.remove("locked"); }
   } else if(pat==="wave"){
     s.classList.remove("locked"); if(p) p.classList.remove("locked");
-    if(h){ h.textContent="Onda: oscila em torno da velocidade escolhida"; h.classList.remove("locked"); }
+    if(h){ h.textContent="Onda: oscila de 0% até o valor do slider"; h.classList.remove("locked"); }
   } else if(pat==="pulse"){
     s.classList.remove("locked"); if(p) p.classList.remove("locked");
     if(h){ h.textContent="Pulso: alterna entre a velocidade e 30% dela"; h.classList.remove("locked"); }
@@ -696,15 +696,18 @@ function startPatternLoop(pat, baseVel){
   }
 
   let tick=0, high=true, cur=5;
-  const interval = pat==="tease" ? 1200 : pat==="wave" ? 200 : 800;
+  const interval = pat==="tease" ? 1200 : pat==="wave" ? 150 : 800;
 
   patternInterval = setInterval(()=>{
     let v = baseVel;
 
     if(pat==="wave"){
-      tick += 0.08;
-      v = Math.round(baseVel * 0.5 + baseVel * 0.5 * Math.sin(tick));
-      v = Math.max(1, Math.min(100, v));
+      tick += 0.015;
+      // Senoidal normalizada: vai de 0 ate baseVel (slider = amplitude maxima)
+      const norm = (Math.sin(tick * Math.PI * 2) + 1) / 2;
+      v = Math.round(norm * baseVel);
+      v = Math.max(0, Math.min(100, v));
+      if(v < 2){ currentVel=0; sendCmd({type:"stop"}); return; }
     }
     else if(pat==="pulse"){
       // Seno de frequencia 2x a onda — picos suaves e rapidos
