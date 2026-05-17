@@ -34,7 +34,7 @@
       width: 100%; padding: 14px 16px; margin-bottom: 12px;
       background: var(--surface2); border: 1px solid var(--border);
       border-radius: 10px; color: var(--text); font-size: 16px;
-      outline: none; transition: border-color 0.2s; letter-spacing: 3px; text-align: center;
+      outline: none; transition: border-color 0.2s; letter-spacing: 2px; text-align: center;
           }
     .login-input::placeholder { letter-spacing: 1px; text-transform: none; font-size: 13px; }
     .login-input:focus { border-color: var(--purple); }
@@ -189,7 +189,7 @@
       background: var(--surface2); border: 1px solid var(--border);
       border-radius: 12px; padding: 12px 18px; font-size: 13px; font-weight: 600;
       opacity: 0; transform: translateY(10px); transition: all 0.3s;
-      pointer-events: none; z-index: 9999; max-width: 280px;
+      pointer-events: auto; z-index: 9999; max-width: 280px;
     }
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast.ok   { border-color: var(--green); color: var(--green); }
@@ -316,6 +316,11 @@
   let patternInterval = null;
 
   const $ = id => document.getElementById(id);
+  // Garante que o campo de token é sempre editável
+  document.addEventListener('DOMContentLoaded', () => {
+    const ti = $('tokenInput');
+    if (ti) { ti.removeAttribute('readonly'); ti.removeAttribute('disabled'); }
+  });
 
   // ── LOGIN ─────────────────────────────────────────────────────────────
   $('btnLogin').onclick = () => doLogin($('tokenInput').value.trim());
