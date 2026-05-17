@@ -100,6 +100,26 @@
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
     .card-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; }
 
+    /* WAVE VISUALIZER */
+    .wave-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; margin-bottom: 16px;
+      position: relative; height: 120px;
+    }
+    .wave-card canvas { width: 100%; height: 100%; display: block; }
+    .wave-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .wave-vel-label {
+      font-size: 42px; font-weight: 900;
+      background: linear-gradient(135deg, #7c4dff, #e040fb);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-shadow: none; filter: drop-shadow(0 0 20px rgba(124,77,255,0.5));
+    }
+    .wave-vel-pct { font-size: 18px; font-weight: 400; opacity: 0.7; }
+
     /* VELOCIDADE */
     .vel-display { text-align: center; margin-bottom: 16px; }
     .vel-number {
@@ -118,35 +138,22 @@
       -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
       background: #fff; box-shadow: 0 2px 8px rgba(124,77,255,0.6); cursor: pointer;
     }
-    .vel-presets { display: flex; gap: 6px; }
+    .vel-presets { display: flex; gap: 6px; margin-bottom: 14px; }
     .btn-preset {
       flex: 1; padding: 7px 0; background: var(--surface2);
       border: 1px solid var(--border); border-radius: 8px;
       color: var(--muted); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
     }
     .btn-preset:hover, .btn-preset.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+    .btn-preset.zero { border-color: rgba(244,67,54,0.4); color: var(--red); }
+    .btn-preset.zero.active { background: var(--red); border-color: var(--red); color: #fff; }
 
-    /* CONTROLES */
-    .ctrl-btns { display: flex; gap: 10px; margin-bottom: 14px; }
-    .btn-start {
-      flex: 1; padding: 14px;
-      background: linear-gradient(135deg, #2e7d32, #43a047);
-      border: none; border-radius: 10px; color: #fff;
-      font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
-    }
-    .btn-start:hover { opacity: 0.88; }
-    .btn-stop {
-      flex: 1; padding: 14px;
-      background: linear-gradient(135deg, #b71c1c, #f44336);
-      border: none; border-radius: 10px; color: #fff;
-      font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
-    }
-    .btn-stop:hover { opacity: 0.88; }
+    /* ANSIOSO no card de velocidade */
     .btn-ansioso {
-      width: 100%; padding: 13px;
+      width: 100%; padding: 11px;
       background: linear-gradient(135deg, #ff6b35, #ff1744);
       border: none; border-radius: 10px; color: #fff;
-      font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+      font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;
     }
     .btn-ansioso:hover { opacity: 0.88; }
     .btn-ansioso.ativo { animation: pulse-red 1.5s infinite; }
@@ -232,32 +239,34 @@
       <div class="status-mode" id="statusMode">Parado</div>
     </div>
 
-    <div class="grid">
+    <!-- Wave Visualizer -->
+    <div class="wave-card" id="waveCard">
+      <canvas id="waveCanvas"></canvas>
+      <div class="wave-overlay">
+        <span class="wave-vel-label" id="waveVelLabel">0<span class="wave-vel-pct">%</span></span>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:1fr">
       <!-- Velocidade -->
       <div class="card">
         <div class="card-title">⚡ Velocidade</div>
         <div class="vel-display">
-          <div class="vel-number" id="velNumber">50</div>
+          <div class="vel-number" id="velNumber">0</div>
           <div class="vel-unit">% de velocidade</div>
         </div>
-        <input type="range" class="vel-slider" id="velSlider" min="1" max="100" value="50" step="1">
+        <input type="range" class="vel-slider" id="velSlider" min="0" max="100" value="0" step="1">
         <div class="vel-presets">
-          <button class="btn-preset" data-v="20">20%</button>
+          <button class="btn-preset zero active" data-v="0">⏹ 0%</button>
+          <button class="btn-preset" data-v="25">25%</button>
           <button class="btn-preset" data-v="50">50%</button>
           <button class="btn-preset" data-v="75">75%</button>
           <button class="btn-preset" data-v="100">100%</button>
         </div>
-      </div>
-
-      <!-- Controles -->
-      <div class="card">
-        <div class="card-title">🎮 Controles</div>
-        <div class="ctrl-btns">
-          <button class="btn-start" id="btnStart">▶ Iniciar</button>
-          <button class="btn-stop" id="btnStop">■ Parar</button>
-        </div>
         <button class="btn-ansioso" id="btnAnsioso">😈 Modo Ansioso (5%)</button>
       </div>
+
+
     </div>
 
     <!-- Padrões -->
@@ -381,6 +390,11 @@
     }
 
     listenHandyState();
+    // Inicia canvas e wave
+    setTimeout(() => {
+      resizeCanvas();
+      startWave(0);
+    }, 100);
   }
 
   // ── TIMER — só conta enquanto rodando ────────────────────────────────
@@ -446,48 +460,165 @@
     });
   }
 
-  // ── SLIDER ────────────────────────────────────────────────────────────
+  // ── WAVE VISUALIZER ───────────────────────────────────────────────────
+  const waveCanvas = $('waveCanvas');
+  const waveCtx    = waveCanvas ? waveCanvas.getContext('2d') : null;
+  const waveLabel  = $('waveVelLabel');
+  let   wavePhase  = 0;
+  let   waveAnimId = null;
+  let   waveVel    = 0; // 0-100
+
+  function resizeCanvas() {
+    if (!waveCanvas) return;
+    const card = $('waveCard');
+    waveCanvas.width  = card.offsetWidth;
+    waveCanvas.height = card.offsetHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+
+  function drawWave() {
+    if (!waveCtx) return;
+    const W = waveCanvas.width, H = waveCanvas.height;
+    const vel = waveVel / 100; // 0.0 – 1.0
+
+    waveCtx.clearRect(0, 0, W, H);
+
+    if (vel === 0) {
+      // Linha plana quando parado
+      waveCtx.beginPath();
+      waveCtx.moveTo(0, H / 2);
+      waveCtx.lineTo(W, H / 2);
+      waveCtx.strokeStyle = 'rgba(124,77,255,0.2)';
+      waveCtx.lineWidth = 2;
+      waveCtx.stroke();
+      waveAnimId = requestAnimationFrame(drawWave);
+      return;
+    }
+
+    const amp    = (H * 0.35) * vel;
+    const freq   = 1.5 + vel * 2.5;
+    const speed  = 0.04 + vel * 0.08;
+    wavePhase   += speed;
+
+    // Onda 1 — principal
+    const grad1 = waveCtx.createLinearGradient(0, 0, W, 0);
+    grad1.addColorStop(0,   'rgba(124,77,255,0.8)');
+    grad1.addColorStop(0.5, 'rgba(224,64,251,0.9)');
+    grad1.addColorStop(1,   'rgba(124,77,255,0.8)');
+
+    waveCtx.beginPath();
+    for (let x = 0; x <= W; x++) {
+      const y = H/2 + Math.sin((x / W) * Math.PI * 2 * freq + wavePhase) * amp;
+      x === 0 ? waveCtx.moveTo(x, y) : waveCtx.lineTo(x, y);
+    }
+    waveCtx.strokeStyle = grad1;
+    waveCtx.lineWidth   = 2.5;
+    waveCtx.stroke();
+
+    // Fill abaixo
+    waveCtx.lineTo(W, H); waveCtx.lineTo(0, H); waveCtx.closePath();
+    const fill1 = waveCtx.createLinearGradient(0, H/2, 0, H);
+    fill1.addColorStop(0, 'rgba(124,77,255,' + (0.15 * vel) + ')');
+    fill1.addColorStop(1, 'rgba(124,77,255,0)');
+    waveCtx.fillStyle = fill1;
+    waveCtx.fill();
+
+    // Onda 2 — secundária deslocada
+    waveCtx.beginPath();
+    for (let x = 0; x <= W; x++) {
+      const y = H/2 + Math.sin((x / W) * Math.PI * 2 * freq * 0.7 + wavePhase * 1.3 + 1) * amp * 0.5;
+      x === 0 ? waveCtx.moveTo(x, y) : waveCtx.lineTo(x, y);
+    }
+    waveCtx.strokeStyle = 'rgba(244,143,177,' + (0.4 * vel) + ')';
+    waveCtx.lineWidth = 1.5;
+    waveCtx.stroke();
+
+    waveAnimId = requestAnimationFrame(drawWave);
+  }
+
+  function startWave(vel) {
+    waveVel = vel;
+    if (waveLabel) {
+      waveLabel.innerHTML = vel + '<span class="wave-vel-pct">%</span>';
+    }
+    if (!waveAnimId) drawWave();
+  }
+
+  function updateWaveVel(vel) {
+    waveVel = vel;
+    if (waveLabel) waveLabel.innerHTML = vel + '<span class="wave-vel-pct">%</span>';
+  }
+
+  // ── SLIDER — velocidade 0 para/inicia automaticamente ─────────────────
   const slider = $('velSlider');
   const velNum = $('velNumber');
+
   slider.oninput = () => {
-    const v = slider.value;
+    const v = parseInt(slider.value);
     velNum.textContent = v;
     slider.style.setProperty('--val', v + '%');
-    if (isRunning) sendCmd({ type: 'velocity', value: parseInt(v) });
+    updateWaveVel(v);
+
+    // Atualiza preset ativo
+    document.querySelectorAll('.btn-preset').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.v) === v);
+    });
+
+    if (v === 0) {
+      // Para tudo
+      if (isRunning || ansiosoOn) doStop();
+    } else {
+      // Inicia ou atualiza velocidade
+      if (!isRunning && !ansiosoOn) {
+        isRunning = true;
+        stopPatternLoop();
+        startPatternLoop(currentPattern, v);
+        sendCmd({ type: 'start', velocity: v, pattern: currentPattern });
+        startTimer();
+      } else {
+        sendCmd({ type: 'velocity', value: v });
+      }
+    }
   };
+
   document.querySelectorAll('.btn-preset').forEach(btn => {
     btn.onclick = () => {
       const v = parseInt(btn.dataset.v);
-      slider.value = v; velNum.textContent = v;
+      slider.value = v;
+      velNum.textContent = v;
       slider.style.setProperty('--val', v + '%');
+      updateWaveVel(v);
       document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      if (isRunning) sendCmd({ type: 'velocity', value: v });
+
+      if (v === 0) {
+        if (isRunning || ansiosoOn) doStop();
+      } else {
+        if (!isRunning && !ansiosoOn) {
+          isRunning = true;
+          stopPatternLoop();
+          startPatternLoop(currentPattern, v);
+          sendCmd({ type: 'start', velocity: v, pattern: currentPattern });
+          startTimer();
+        } else {
+          sendCmd({ type: 'velocity', value: v });
+        }
+      }
     };
   });
-
-  // ── CONTROLES ─────────────────────────────────────────────────────────
-  $('btnStart').onclick = () => {
-    isRunning = true; ansiosoOn = false;
-    $('btnAnsioso').textContent = '😈 Modo Ansioso (5%)';
-    $('btnAnsioso').classList.remove('ativo');
-    stopPatternLoop();
-    startPatternLoop(currentPattern, parseInt(slider.value));
-    sendCmd({ type: 'start', velocity: parseInt(slider.value), pattern: currentPattern });
-    startTimer();
-    showToast('info', '▶ Iniciado — ' + currentPattern);
-  };
-
-  $('btnStop').onclick = doStop;
 
   function doStop() {
     isRunning = false; ansiosoOn = false;
     stopPatternLoop();
-    $('btnAnsioso').textContent = '😈 Modo Ansioso (5%)';
-    $('btnAnsioso').classList.remove('ativo');
+    slider.value = 0; velNum.textContent = 0;
+    slider.style.setProperty('--val', '0%');
+    updateWaveVel(0);
+    document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active'));
+    document.querySelector('.btn-preset.zero').classList.add('active');
+    const ba = $('btnAnsioso');
+    if (ba) { ba.textContent = '😈 Modo Ansioso (5%)'; ba.classList.remove('ativo'); }
     sendCmd({ type: 'stop' });
     pauseTimer();
-    showToast('info', '■ Parado');
   }
 
   $('btnAnsioso').onclick = () => {
@@ -495,16 +626,16 @@
     const btn = $('btnAnsioso');
     if (ansiosoOn) {
       isRunning = false; stopPatternLoop();
+      slider.value = 5; velNum.textContent = 5;
+      slider.style.setProperty('--val', '5%');
+      updateWaveVel(5);
       btn.textContent = '🛑 Parar Modo Ansioso';
       btn.classList.add('ativo');
       sendCmd({ type: 'ansioso', active: true });
       startTimer();
       showToast('info', '😈 Modo Ansioso ativo');
     } else {
-      btn.textContent = '😈 Modo Ansioso (5%)';
-      btn.classList.remove('ativo');
-      sendCmd({ type: 'ansioso', active: false });
-      pauseTimer();
+      doStop();
       showToast('ok', '⏹ Modo Ansioso parado');
     }
   };
