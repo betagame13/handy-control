@@ -276,7 +276,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.9</div>
+<div class="version-tag">v1.3.0</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -375,7 +375,7 @@ function drawChart(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   // Grid
-  [25,50,75,100].forEach(pct=>{
+  [0,25,50,75,100].forEach(pct=>{
     const y=velY(pct,H);
     ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y);
     ctx.strokeStyle="rgba(255,255,255,0.05)"; ctx.lineWidth=1; ctx.stroke();
@@ -474,7 +474,7 @@ function drawChart(){
   }
 }
 
-function velY(v, H){ return H - (v/100) * H * 0.88 - H * 0.06; }
+function velY(v, H){ return H - (v/100) * H * 0.80 - H * 0.12; }
 
 
 // amostras via setVel e patternLoop
