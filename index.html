@@ -276,7 +276,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.3.0</div>
+<div class="version-tag">v1.3.1</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -835,16 +835,37 @@ async function loadAdminTokens(){
 
 // LOGOUT
 function logout(){
+  // Para tudo
   clearInterval(timerInterval); timerInterval=null;
   stopPatternLoop(); stopChartLoop();
   if(sampleInterval){ clearInterval(sampleInterval); sampleInterval=null; }
+
+  // Reseta estados
   isRunning=false; ansiosoOn=false; session=null; isAdmin=false;
-  currentVel=0; 
+  currentVel=0; currentBaseVel=50; currentPattern="steady";
+  samples=[];
+
+  // Reseta slider e UI
+  slider.value=0; velNum.textContent=0;
+  slider.style.setProperty("--val","0%");
+  document.querySelectorAll(".btn-preset").forEach(b=>b.classList.remove("active"));
+  document.querySelector(".btn-preset.zero").classList.add("active");
+  document.querySelectorAll(".btn-pattern").forEach(b=>b.classList.remove("active"));
+  document.querySelector(".btn-pattern[data-pattern='steady']").classList.add("active");
+  updatePatternBadge("Manual");
+  updateSliderLock("steady");
+
+  // Volta para login
   $("loginWrap").style.display="flex";
   $("app").style.display="none";
   tokenInput.value=""; $("loginErr").textContent="";
   $("timerBadge").classList.add("hidden");
+  $("timerBadge").classList.remove("urgent");
+  $("timerBadge").classList.add("stopped");
   $("adminSection").classList.add("hidden");
+  $("statusDot").className="status-dot";
+  $("statusText").textContent="Aguardando conexão...";
+  $("statusMode").textContent="Parado";
 }
 $("btnLogout").addEventListener("click",logout);
 
