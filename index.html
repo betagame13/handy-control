@@ -99,7 +99,7 @@
       text-transform:none;letter-spacing:0;transition:all .3s;
     }
     .chart-wrap{position:relative;height:150px;width:100%;}
-    #velChart{display:block;width:100%;height:130px;border-radius:8px;filter:blur(0.3px);}
+    #velChart{display:block;width:100%;height:130px;border-radius:8px;}
 
     /* CARD */
     .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;}
@@ -276,7 +276,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.8</div>
+<div class="version-tag">v1.2.9</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -317,7 +317,7 @@ let   sampleInterval = null;
 function resizeChart(){
   if(!canvas || !ctx) return;
   const wrap = canvas.parentElement;
-  const dpr  = Math.max(window.devicePixelRatio || 1, 2); // min 2x para antialiasing
+  const dpr  = window.devicePixelRatio || 1;
   const W    = wrap.offsetWidth  || 800;
   const H    = wrap.offsetHeight || 130;
   canvas.width  = W * dpr;
@@ -375,7 +375,7 @@ function drawChart(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   // Grid
-  [25,50,75].forEach(pct=>{
+  [25,50,75,100].forEach(pct=>{
     const y=velY(pct,H);
     ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y);
     ctx.strokeStyle="rgba(255,255,255,0.05)"; ctx.lineWidth=1; ctx.stroke();
@@ -709,10 +709,9 @@ function startPatternLoop(pat, baseVel){
   stopPatternLoop();
   updateSliderLock(pat);
   if(pat==="wave"){
-    // Onda: RAF para valores continuos baseados em tempo real
+    // Onda: setInterval a 16ms — nao conflita com chartRaf
     let waveLastCmd = 0;
-    let waveRafId   = null;
-    function waveLoop(){
+    const waveInt = setInterval(()=>{
       const now  = performance.now();
       const t    = now / 1000;
       const norm = (Math.sin(t * Math.PI * 2.0) + 1) / 2;
@@ -724,14 +723,8 @@ function startPatternLoop(pat, baseVel){
         if(vf < 2) sendCmd({type:"stop"});
         else        sendCmd({type:"velocity", value: Math.round(vf)});
       }
-      waveRafId = requestAnimationFrame(waveLoop);
-    }
-    waveRafId = requestAnimationFrame(waveLoop);
-    // Guarda referencia para poder parar
-    patternInterval = { _isWaveRaf: true, _id: null };
-    Object.defineProperty(patternInterval, '_id', {
-      get(){ return waveRafId; }, set(v){ waveRafId=v; }
-    });
+    }, 16);
+    patternInterval = waveInt;
     return;
   }
   if(pat==="steady"){
@@ -792,14 +785,7 @@ function startPatternLoop(pat, baseVel){
   }, interval);
 }
 function stopPatternLoop(){
-  if(patternInterval){
-    if(patternInterval._isWaveRaf){
-      cancelAnimationFrame(patternInterval._id);
-    } else {
-      clearInterval(patternInterval);
-    }
-    patternInterval=null;
-  }
+  if(patternInterval){ clearInterval(patternInterval); patternInterval=null; }
   // Garante que samples tem pelo menos um ponto atual ao trocar de padrao
   if(samples.length === 0 || performance.now() - samples[samples.length-1].t > 200){
     pushVel(currentVel);
