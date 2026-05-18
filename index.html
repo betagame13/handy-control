@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.1.6</div>
+<div class="version-tag">v1.1.8</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -301,7 +301,7 @@ const db    = getDatabase(fbApp);
 const $ = id => document.getElementById(id);
 
 let session=null,isAdmin=false,timerInterval=null,timerDuration=0;
-let isRunning=false,ansiosoOn=false,currentPattern="steady",patternInterval=null,currentBaseVel=50;
+let isRunning=false,ansiosoOn=false,currentPattern="steady",patternInterval=null,currentBaseVel=50,wavePhaseOffset=0;
 
 // GRAFICO — renderizacao fluida 60fps com interpolacao bezier
 const canvas = $("velChart");
@@ -403,12 +403,11 @@ function drawChart(){
     const amp  = currentBaseVel / 100;
     const freq = 2.0;
     ctx.beginPath();
-    // 4 subpixels por pixel para linha perfectamente lisa
     const step = 0.25;
     let first = true;
     for(let x = 0; x <= W; x += step){
       const tAgo = ((W - x) / W) * (WINDOW_MS / 1000);
-      const norm = (Math.sin((nowS - tAgo) * Math.PI * freq) + 1) / 2;
+      const norm = (Math.sin((nowS + wavePhaseOffset - tAgo) * Math.PI * freq) + 1) / 2;
       const v    = norm * amp * 100;
       const y    = velY(v, H);
       if(first){ ctx.moveTo(x, y); first=false; } else ctx.lineTo(x, y);
@@ -427,7 +426,7 @@ function drawChart(){
     gw.addColorStop(0, clr.fill); gw.addColorStop(1,"rgba(0,0,0,0)");
     ctx.fillStyle=gw; ctx.fill();
     // Ponto pulsante
-    const lnorm = (Math.sin(nowS * Math.PI * freq) + 1) / 2;
+    const lnorm = (Math.sin((nowS + wavePhaseOffset) * Math.PI * freq) + 1) / 2;
     const lv    = lnorm * amp * 100;
     const ly    = velY(lv, H);
     const pulse = 0.65 + 0.35 * Math.sin(nowMs * 0.007);
@@ -747,7 +746,7 @@ function startPatternLoop(pat, baseVel){
     return;
   }
 
-  let tick=0, high=true, cur=5;
+  let tick=0, high=true, cur=0, escDir=1;
   const interval = pat==="tease" ? 1200 : pat==="wave" ? 30 : pat==="pulse" ? 120 : pat==="escalate" ? 200 : 800;
 
   patternInterval = setInterval(()=>{
@@ -775,9 +774,11 @@ function startPatternLoop(pat, baseVel){
       return;
     }
     else if(pat==="escalate"){
-      cur = Math.min(baseVel, cur + 8);
-      v = cur;
-      v = Math.max(1, Math.min(100, v));
+      cur += 15 * escDir;
+      if(cur >= baseVel){ cur = baseVel; escDir = -1; }
+      else if(cur <= 0) { cur = 0;       escDir =  1; }
+      v = Math.round(cur);
+      if(v <= 0){ currentVel=0; sendCmd({type:"stop"}); return; }
     }
     else if(pat==="tease"){
       high = !high;
