@@ -276,7 +276,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.4</div>
+<div class="version-tag">v1.2.5</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -687,23 +687,29 @@ function startPatternLoop(pat, baseVel){
   stopPatternLoop();
   updateSliderLock(pat);
   if(pat==="wave"){
-    // Onda: senoidal a 16ms — float para grafico liso
+    // Onda: RAF para valores continuos baseados em tempo real
     let waveLastCmd = 0;
-    const waveInterval = setInterval(()=>{
-      const t    = performance.now() / 1000;
+    let waveRafId   = null;
+    function waveLoop(){
+      const now  = performance.now();
+      const t    = now / 1000;
       const norm = (Math.sin(t * Math.PI * 2.0) + 1) / 2;
-      const vf   = norm * baseVel; // float — sem arredondamento
+      const vf   = norm * baseVel;
       currentVel = vf;
-      pushVel(vf); // float puro para Catmull-Rom liso
-      // Envia comando ao Handy a cada 50ms (nao precisa mais)
-      const now = performance.now();
+      pushVel(vf);
       if(now - waveLastCmd >= 50){
         waveLastCmd = now;
         if(vf < 2) sendCmd({type:"stop"});
         else        sendCmd({type:"velocity", value: Math.round(vf)});
       }
-    }, 16);
-    patternInterval = waveInterval;
+      waveRafId = requestAnimationFrame(waveLoop);
+    }
+    waveRafId = requestAnimationFrame(waveLoop);
+    // Guarda referencia para poder parar
+    patternInterval = { _isWaveRaf: true, _id: null };
+    Object.defineProperty(patternInterval, '_id', {
+      get(){ return waveRafId; }, set(v){ waveRafId=v; }
+    });
     return;
   }
   if(pat==="steady"){
@@ -764,7 +770,14 @@ function startPatternLoop(pat, baseVel){
   }, interval);
 }
 function stopPatternLoop(){
-  if(patternInterval){ clearInterval(patternInterval); patternInterval=null; }
+  if(patternInterval){
+    if(patternInterval._isWaveRaf){
+      cancelAnimationFrame(patternInterval._id);
+    } else {
+      clearInterval(patternInterval);
+    }
+    patternInterval=null;
+  }
   // Garante que samples tem pelo menos um ponto atual ao trocar de padrao
   if(samples.length === 0 || performance.now() - samples[samples.length-1].t > 200){
     pushVel(currentVel);
