@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.6</div>
+<div class="version-tag">v1.2.8</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -393,48 +393,8 @@ function drawChart(){
 
   const clr  = PATTERN_COLORS[currentPattern] || PATTERN_COLORS.steady;
   const now  = performance.now() / 1000;
-  const isWave = currentPattern === "wave" && (isRunning || ansiosoOn);
-
-  if(isWave){
-    // Onda desenhada matematicamente pixel a pixel — zero escadinha
-    const amp    = currentBaseVel / 100; // amplitude 0-1
-    const freq   = 0.8;                  // ciclos por segundo
-    const offset = now * freq * Math.PI * 2; // fase atual
-
-    ctx.beginPath();
-    for(let x = 0; x <= W; x++){
-      // Cada pixel x corresponde a um momento no passado
-      const t    = ((W - x) / W) * WINDOW_MS / 1000; // segundos atras
-      const norm = (Math.sin((now - t) * freq * Math.PI * 2) + 1) / 2;
-      const v    = norm * amp * 100;
-      const y    = velY(v, H);
-      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.strokeStyle = clr.line;
-    ctx.lineWidth   = 2.5;
-    ctx.lineJoin    = "round";
-    ctx.lineCap     = "round";
-    ctx.stroke();
-
-    // Fill
-    ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0,   clr.fill);
-    grad.addColorStop(1,   "rgba(0,0,0,0)");
-    ctx.fillStyle = grad; ctx.fill();
-
-    // Ponto pulsante na ponta
-    const lastNorm = (Math.sin(now * freq * Math.PI * 2) + 1) / 2;
-    const lastV    = lastNorm * amp * 100;
-    const lastY    = velY(lastV, H);
-    const pulse    = 0.65 + 0.35 * Math.sin(performance.now() * 0.007);
-    ctx.beginPath(); ctx.arc(W, lastY, 4, 0, Math.PI*2);
-    ctx.fillStyle = clr.line; ctx.fill();
-    ctx.beginPath(); ctx.arc(W, lastY, 8*pulse, 0, Math.PI*2);
-    ctx.strokeStyle = clr.line.replace(/[\d.]+\)$/, "0.25)");
-    ctx.lineWidth = 1.5; ctx.stroke();
-
-  } else {
+  // Sempre usa samples — onda alimenta samples via waveRAF
+  
     // Outros padroes — usa amostras com Catmull-Rom
     if(samples.length < 2) return;
     const tStart = performance.now() - WINDOW_MS;
@@ -487,7 +447,6 @@ function drawChart(){
       ctx.strokeStyle = clr.line.replace(/[\d.]+\)$/, "0.25)");
       ctx.lineWidth = 1.5; ctx.stroke();
     }
-  }
 }
 
 function velY(v, H){ return H - (v/100) * H * 0.88 - H * 0.06; }
@@ -720,6 +679,10 @@ function updateSliderLock(pat){
 function startPatternLoop(pat, baseVel){
   stopPatternLoop();
   updateSliderLock(pat);
+  if(pat==="wave"){
+    startWaveRaf(baseVel);
+    return;
+  }
   if(pat==="steady"){
     // Manual: envia a velocidade atual do slider imediatamente
     if(baseVel > 0){
@@ -735,17 +698,7 @@ function startPatternLoop(pat, baseVel){
   patternInterval = setInterval(()=>{
     let v = baseVel;
 
-    if(pat==="wave"){
-      const t    = performance.now() / 1000;
-      const norm = (Math.sin(t * Math.PI * 0.8) + 1) / 2;
-      const vf   = norm * baseVel;
-      currentVel = vf;
-      pushVel(vf); // injeta no historico para grafico continuo
-      if(vf < 2){ sendCmd({type:"stop"}); return; }
-      sendCmd({type:"velocity", value: Math.round(vf)});
-      return;
-    }
-    else if(pat==="pulse"){
+    if(pat==="pulse"){
       // Seno de frequencia 2x a onda — picos suaves e rapidos
       v = Math.round(baseVel * 0.5 + baseVel * 0.5 * Math.sin(tick += 0.5));
       v = Math.max(1, Math.min(100, v));
@@ -774,7 +727,31 @@ function startPatternLoop(pat, baseVel){
     sendCmd({type:"velocity", value:v});
   }, interval);
 }
-function stopPatternLoop(){ if(patternInterval){ clearInterval(patternInterval); patternInterval=null; } }
+function stopPatternLoop(){ if(patternInterval){ clearInterval(patternInterval); patternInterval=null; } stopWaveRaf(); }
+
+// RAF dedicado para onda — alimenta samples em 60fps para grafico liso
+let waveRaf = null;
+
+function startWaveRaf(baseVel){
+  stopWaveRaf();
+  function loop(){
+    const t    = performance.now() / 1000;
+    const norm = (Math.sin(t * Math.PI * 0.8) + 1) / 2;
+    const vf   = norm * baseVel;
+    currentVel = vf;
+    pushVel(vf);
+    if(vf < 2) sendCmd({type:"stop"});
+    else        sendCmd({type:"velocity", value: Math.round(vf)});
+    waveRaf = requestAnimationFrame(loop);
+  }
+  waveRaf = requestAnimationFrame(loop);
+}
+
+function stopWaveRaf(){
+  if(waveRaf){ cancelAnimationFrame(waveRaf); waveRaf = null; }
+}
+
+
 
 function updatePatternBadge(name){
   const el=document.getElementById("chartPatternLabel");
