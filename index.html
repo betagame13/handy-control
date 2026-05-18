@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.1.9</div>
+<div class="version-tag">v1.2.0</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -310,7 +310,7 @@ const chartPat = $("chartPatternLabel");
 
 // Buffer circular de amostras em tempo real
 const SAMPLE_RATE = 50;   // ms entre amostras
-const WINDOW_MS   = 8000; // 8 segundos visíveis
+const WINDOW_MS   = 6000; // 6 segundos visiveis
 let   samples     = [];   // [{t, v}]
 let   currentVel  = 0;
 let   chartRaf    = null;
@@ -335,15 +335,6 @@ window.addEventListener("resize", resizeChart);
 
 function pushVel(v){
   const now = performance.now();
-  // Interpolacao linear entre ultimo e atual — elimina escadinha visual
-  if(samples.length > 0){
-    const last = samples[samples.length - 1];
-    const steps = 4;
-    for(let i = 1; i < steps; i++){
-      const frac = i / steps;
-      samples.push({ t: last.t + (now - last.t) * frac, v: last.v + (v - last.v) * frac });
-    }
-  }
   samples.push({t: now, v: v});
   const cutoff = now - WINDOW_MS - 500;
   while(samples.length > 0 && samples[0].t < cutoff) samples.shift();
@@ -442,9 +433,12 @@ function drawChart(){
     // Outros padroes — usa amostras com Catmull-Rom
     if(samples.length < 2) return;
     const tStart = performance.now() - WINDOW_MS;
-    const pts = samples
+    let rawPts = samples
       .map(s => ({ x: ((s.t - tStart) / WINDOW_MS) * W, y: velY(s.v, H) }))
       .filter(p => p.x >= -20);
+    // Reduz pontos se necessario — max 200 pontos no Catmull-Rom
+    const skip = Math.max(1, Math.floor(rawPts.length / 200));
+    const pts  = skip > 1 ? rawPts.filter((_, i) => i % skip === 0) : rawPts;
     if(pts.length < 2) return;
 
     ctx.beginPath();
@@ -804,14 +798,20 @@ let waveRaf = null;
 
 function startWaveRaf(baseVel){
   stopWaveRaf();
+  let lastCmd = 0;
   function loop(){
-    const t    = performance.now() / 1000;
-    const norm = (Math.sin(t * Math.PI * 2.0) + 1) / 2; // ciclo ~1s rapido
+    const nowMs = performance.now();
+    const t     = nowMs / 1000;
+    const norm  = (Math.sin(t * Math.PI * 2.0) + 1) / 2; // ciclo ~1s rapido
     const vf   = norm * baseVel;
     currentVel = vf;
     pushVel(vf); // float puro — grafico liso
-    if(vf < 2) sendCmd({type:"stop"});
-    else        sendCmd({type:"velocity", value: Math.round(vf)});
+    // Envia comando ao Handy no maximo a cada 50ms
+    if(nowMs - lastCmd > 50){
+      lastCmd = nowMs;
+      if(vf < 2) sendCmd({type:"stop"});
+      else        sendCmd({type:"velocity", value: Math.round(vf)});
+    }
     waveRaf = requestAnimationFrame(loop);
   }
   waveRaf = requestAnimationFrame(loop);
