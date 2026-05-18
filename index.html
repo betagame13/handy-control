@@ -276,7 +276,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.5</div>
+<div class="version-tag">v1.2.6</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -393,10 +393,25 @@ function drawChart(){
   let raw = samples
     .map(s=>({x:((s.t-tStart)/WINDOW_MS)*W, y:velY(s.v,H)}))
     .filter(p=>p.x>=-20);
+  if(raw.length<2) return;
 
-  // Max 200 pontos para performance
-  const skip = Math.max(1,Math.floor(raw.length/200));
-  const pts  = skip>1 ? raw.filter((_,i)=>i%skip===0) : raw;
+  // Interpola pontos extras entre amostras — elimina mini degraus
+  const pts = [];
+  for(let i=0; i<raw.length-1; i++){
+    const a=raw[i], b=raw[i+1];
+    const dx=b.x-a.x;
+    // So interpola se os pontos estiverem distantes (>2px)
+    if(dx>2){
+      const steps=Math.min(Math.ceil(dx/2), 8);
+      for(let s=0; s<steps; s++){
+        const f=s/steps;
+        pts.push({x:a.x+dx*f, y:a.y+(b.y-a.y)*f});
+      }
+    } else {
+      pts.push(a);
+    }
+  }
+  pts.push(raw[raw.length-1]);
   if(pts.length<2) return;
 
   // Catmull-Rom adaptativo
