@@ -276,7 +276,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.2</div>
+<div class="version-tag">v1.2.3</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -683,18 +683,22 @@ function startPatternLoop(pat, baseVel){
   stopPatternLoop();
   updateSliderLock(pat);
   if(pat==="wave"){
-  }
-  if(pat==="wave"){
-    // Onda: senoidal via setInterval a 30ms
+    // Onda: senoidal a 16ms — float para grafico liso
+    let waveLastCmd = 0;
     const waveInterval = setInterval(()=>{
       const t    = performance.now() / 1000;
       const norm = (Math.sin(t * Math.PI * 2.0) + 1) / 2;
-      const vf   = norm * baseVel;
+      const vf   = norm * baseVel; // float — sem arredondamento
       currentVel = vf;
-      pushVel(vf);
-      if(vf < 2) sendCmd({type:"stop"});
-      else        sendCmd({type:"velocity", value: Math.round(vf)});
-    }, 30);
+      pushVel(vf); // float puro para Catmull-Rom liso
+      // Envia comando ao Handy a cada 50ms (nao precisa mais)
+      const now = performance.now();
+      if(now - waveLastCmd >= 50){
+        waveLastCmd = now;
+        if(vf < 2) sendCmd({type:"stop"});
+        else        sendCmd({type:"velocity", value: Math.round(vf)});
+      }
+    }, 16);
     patternInterval = waveInterval;
     return;
   }
