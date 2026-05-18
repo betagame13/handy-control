@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.9</div>
+<div class="version-tag">v1.3.0</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -319,7 +319,7 @@ let   sampleInterval = null;
 function resizeChart(){
   if(!canvas || !ctx) return;
   const wrap = canvas.parentElement;
-  const dpr  = window.devicePixelRatio || 1;
+  const dpr  = Math.min(window.devicePixelRatio || 1, 3); // max 3x
   const W    = wrap.offsetWidth  || 800;
   const H    = wrap.offsetHeight || 130;
   canvas.width  = W * dpr;
@@ -327,6 +327,9 @@ function resizeChart(){
   canvas.style.width  = W + "px";
   canvas.style.height = H + "px";
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Antialiasing maximo
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 }
 window.addEventListener("resize", resizeChart);
 
@@ -400,15 +403,25 @@ function drawChart(){
     const amp  = currentBaseVel / 100;
     const freq = 2.0;
     ctx.beginPath();
-    for(let x = 0; x <= W; x++){
+    // 4 subpixels por pixel para linha perfectamente lisa
+    const step = 0.25;
+    let first = true;
+    for(let x = 0; x <= W; x += step){
       const tAgo = ((W - x) / W) * (WINDOW_MS / 1000);
       const norm = (Math.sin((nowS - tAgo) * Math.PI * freq) + 1) / 2;
       const v    = norm * amp * 100;
       const y    = velY(v, H);
-      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      if(first){ ctx.moveTo(x, y); first=false; } else ctx.lineTo(x, y);
     }
-    ctx.strokeStyle = clr.line; ctx.lineWidth=2.5;
-    ctx.lineJoin="round"; ctx.lineCap="round"; ctx.stroke();
+    ctx.strokeStyle = clr.line;
+    ctx.lineWidth   = 2;
+    ctx.lineJoin    = "round";
+    ctx.lineCap     = "round";
+    // Glow suave elimina serrilhado visual
+    ctx.shadowColor = clr.line;
+    ctx.shadowBlur  = 4;
+    ctx.stroke();
+    ctx.shadowBlur  = 0;
     ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
     const gw = ctx.createLinearGradient(0,0,0,H);
     gw.addColorStop(0, clr.fill); gw.addColorStop(1,"rgba(0,0,0,0)");
