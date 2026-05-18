@@ -276,7 +276,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.3</div>
+<div class="version-tag">v1.2.4</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -410,10 +410,10 @@ function drawChart(){
     const jc=Math.abs(p2.y-p1.y)/H;
     const jp=Math.abs(p1.y-p0.y)/H;
     const jn=Math.abs(p3.y-p2.y)/H;
-    if(jc>0.15||jp>0.15||jn>0.15){
+    if(jc>0.25||jp>0.25||jn>0.25){
       ctx.lineTo(p2.x,p2.y);
     } else {
-      const t=0.4;
+      const t=0.3;
       ctx.bezierCurveTo(
         p1.x+(p2.x-p0.x)*t/3, p1.y+(p2.y-p0.y)*t/3,
         p2.x-(p3.x-p1.x)*t/3, p2.y-(p3.y-p1.y)*t/3,
@@ -640,9 +640,13 @@ document.querySelectorAll(".btn-pattern").forEach(btn=>{
     updatePatternBadge(name);
     updateSliderLock(currentPattern);
     if(isRunning || ansiosoOn){
+      // Para steady usa valor do slider — para outros usa currentVel
+      const vel = currentPattern==="steady" ? parseInt(slider.value)||0 : currentVel;
       stopPatternLoop();
-      startPatternLoop(currentPattern, currentVel);
-      sendCmd({type:"start", velocity:currentVel, pattern:currentPattern});
+      startPatternLoop(currentPattern, vel);
+      if(currentPattern !== "steady"){
+        sendCmd({type:"start", velocity:Math.round(vel), pattern:currentPattern});
+      }
     }
   });
 });
