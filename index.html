@@ -144,8 +144,6 @@
     .btn-preset.zero.active{background:var(--red);border-color:var(--red);color:#fff;}
     .vel-presets.locked .btn-preset:not(.zero){ opacity:0.3; pointer-events:none; cursor:not-allowed; }
 
-
-
     /* PADROES */
     .patterns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
     .btn-pattern{
@@ -278,7 +276,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.0</div>
+<div class="version-tag">v1.2.1</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -301,7 +299,7 @@ const db    = getDatabase(fbApp);
 const $ = id => document.getElementById(id);
 
 let session=null,isAdmin=false,timerInterval=null,timerDuration=0;
-let isRunning=false,ansiosoOn=false,currentPattern="steady",patternInterval=null,currentBaseVel=50,wavePhaseOffset=0;
+let isRunning=false,ansiosoOn=false,currentPattern="steady",patternInterval=null,currentBaseVel=50;
 
 // GRAFICO — renderizacao fluida 60fps com interpolacao bezier
 const canvas = $("velChart");
@@ -724,7 +722,19 @@ function startPatternLoop(pat, baseVel){
   stopPatternLoop();
   updateSliderLock(pat);
   if(pat==="wave"){
-    startWaveRaf(baseVel);
+  }
+  if(pat==="wave"){
+    // Onda: senoidal via setInterval a 30ms
+    const waveInterval = setInterval(()=>{
+      const t    = performance.now() / 1000;
+      const norm = (Math.sin(t * Math.PI * 2.0) + 1) / 2;
+      const vf   = norm * baseVel;
+      currentVel = vf;
+      pushVel(vf);
+      if(vf < 2) sendCmd({type:"stop"});
+      else        sendCmd({type:"velocity", value: Math.round(vf)});
+    }, 30);
+    patternInterval = waveInterval;
     return;
   }
   if(pat==="steady"){
@@ -786,42 +796,11 @@ function startPatternLoop(pat, baseVel){
 }
 function stopPatternLoop(){
   if(patternInterval){ clearInterval(patternInterval); patternInterval=null; }
-  stopWaveRaf();
   // Garante que samples tem pelo menos um ponto atual ao trocar de padrao
   if(samples.length === 0 || performance.now() - samples[samples.length-1].t > 200){
     pushVel(currentVel);
   }
 }
-
-// RAF dedicado para onda — alimenta samples em 60fps para grafico liso
-let waveRaf = null;
-
-function startWaveRaf(baseVel){
-  stopWaveRaf();
-  let lastCmd = 0;
-  function loop(){
-    const nowMs = performance.now();
-    const t     = nowMs / 1000;
-    const norm  = (Math.sin(t * Math.PI * 2.0) + 1) / 2; // ciclo ~1s rapido
-    const vf   = norm * baseVel;
-    currentVel = vf;
-    pushVel(vf); // float puro — grafico liso
-    // Envia comando ao Handy no maximo a cada 50ms
-    if(nowMs - lastCmd > 50){
-      lastCmd = nowMs;
-      if(vf < 2) sendCmd({type:"stop"});
-      else        sendCmd({type:"velocity", value: Math.round(vf)});
-    }
-    waveRaf = requestAnimationFrame(loop);
-  }
-  waveRaf = requestAnimationFrame(loop);
-}
-
-function stopWaveRaf(){
-  if(waveRaf){ cancelAnimationFrame(waveRaf); waveRaf = null; }
-}
-
-
 
 function updatePatternBadge(name){
   const el=document.getElementById("chartPatternLabel");
