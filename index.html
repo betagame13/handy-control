@@ -147,7 +147,7 @@
 
 
     /* PADROES */
-    .patterns{display:grid;grid-templaté-columns:1fr 1fr;gap:8px;}
+    .patterns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
     .btn-pattern{
       padding:10px 8px;background:var(--surface2);
       border:1px solid var(--border);border-radius:10px;
@@ -161,7 +161,7 @@
     .pat-desc{display:block;font-size:10px;color:var(--muted);margin-top:1px;}
 
     /* ADMIN */
-    .admin-grid{display:grid;grid-templaté-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:12px;}
+    .admin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:12px;}
     .token-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;}
     .token-code{font-size:17px;font-weight:800;letter-spacing:2px;color:var(--purple);margin-bottom:6px;font-family:monospace;}
     .token-info{font-size:11px;color:var(--muted);line-height:1.7;}
@@ -177,10 +177,10 @@
       position:fixed;bottom:24px;right:24px;
       background:var(--surface2);border:1px solid var(--border);
       border-radius:12px;padding:12px 18px;font-size:13px;font-weight:600;
-      opacity:0;transform:translatéY(10px);transition:all .3s;
+      opacity:0;transform:translateY(10px);transition:all .3s;
       pointer-events:none;z-index:9999;max-width:280px;
     }
-    .toast.show{opacity:1;transform:translatéY(0);}
+    .toast.show{opacity:1;transform:translateY(0);}
     .toast.ok{border-color:var(--green);color:var(--green);}
     .toast.err{border-color:var(--red);color:var(--red);}
     .toast.info{border-color:var(--purple);color:#b39dff;}
@@ -262,7 +262,7 @@
         <button class="btn-pattern" data-pattern="wave"><span class="pat-icon">&#12316;&#65039;</span><span class="pat-name">Onda</span><span class="pat-desc">Sobe e desce</span></button>
         <button class="btn-pattern" data-pattern="pulse"><span class="pat-icon">&#128147;</span><span class="pat-name">Pulso</span><span class="pat-desc">Pulsos rápidos</span></button>
         <button class="btn-pattern" data-pattern="random"><span class="pat-icon">&#127922;</span><span class="pat-name">Aleatório</span><span class="pat-desc">Velocidade variada</span></button>
-        <button class="btn-pattern" data-pattern="escalaté"><span class="pat-icon">&#128200;</span><span class="pat-name">Crescente</span><span class="pat-desc">Começa devagar</span></button>
+        <button class="btn-pattern" data-pattern="escalate"><span class="pat-icon">&#128200;</span><span class="pat-name">Crescente</span><span class="pat-desc">Começa devagar</span></button>
         <button class="btn-pattern" data-pattern="tease"><span class="pat-icon">&#128527;</span><span class="pat-name">Tease</span><span class="pat-desc">Para e volta</span></button>
       </div>
     </div>
@@ -278,11 +278,11 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.5</div>
+<div class="version-tag">v1.2.6</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, onValue, updaté } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const FIREBASE_CONFIG = {
   apiKey:"AIzaSyDuCce8-CEY2LdTO0S_ypwjqpXdcJihGHo",
@@ -369,7 +369,7 @@ const PATTERN_COLORS = {
   wave:     {line:"rgba(64,196,255,1)",    fill:"rgba(64,196,255,0.18)"},
   pulse:    {line:"rgba(244,67,54,1)",     fill:"rgba(244,67,54,0.18)"},
   random:   {line:"rgba(255,183,77,1)",    fill:"rgba(255,183,77,0.18)"},
-  escalaté: {line:"rgba(129,199,132,1)",   fill:"rgba(129,199,132,0.18)"},
+  escalate: {line:"rgba(129,199,132,1)",   fill:"rgba(129,199,132,0.18)"},
   tease:    {line:"rgba(224,64,251,1)",    fill:"rgba(224,64,251,0.18)"},
 };
 
@@ -396,7 +396,7 @@ function drawChart(){
   const isWave = currentPattern === "wave" && (isRunning || ansiosoOn);
 
   if(isWave){
-    // Onda desenhada matématicamente pixel a pixel — zero escadinha
+    // Onda desenhada matematicamente pixel a pixel — zero escadinha
     const amp    = currentBaseVel / 100; // amplitude 0-1
     const freq   = 0.8;                  // ciclos por segundo
     const offset = now * freq * Math.PI * 2; // fase atual
@@ -418,7 +418,7 @@ function drawChart(){
 
     // Fill
     ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-    const grad = ctx.creatéLinearGradient(0, 0, 0, H);
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
     grad.addColorStop(0,   clr.fill);
     grad.addColorStop(1,   "rgba(0,0,0,0)");
     ctx.fillStyle = grad; ctx.fill();
@@ -473,7 +473,7 @@ function drawChart(){
     const last  = pts[pts.length-1];
     const first = pts[0];
     ctx.lineTo(last.x, H); ctx.lineTo(first.x, H); ctx.closePath();
-    const grad = ctx.creatéLinearGradient(0, 0, 0, H);
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
     grad.addColorStop(0,   clr.fill);
     grad.addColorStop(0.6, clr.fill.replace(/[\d.]+\)$/, "0.06)"));
     grad.addColorStop(1,   "rgba(0,0,0,0)");
@@ -528,8 +528,8 @@ async function doLogin(){
     if(!snap.exists()){ err.textContent="Token inválido."; return; }
     const token=snap.val();
     if(token.revoked){ err.textContent="Token revogado."; return; }
-    const now=Daté.now();
-    if(token.activatédAt && now-token.activatédAt>token.duration){
+    const now=Date.now();
+    if(token.activatedAt && now-token.activatedAt>token.duration){
       err.textContent="Token expirado."; return;
     }
     session={code,token}; isAdmin=false; enterApp();
@@ -553,7 +553,7 @@ function enterApp(){
     $("adminSection").classList.remove("hidden");
     loadAdminTokens();
   }
-  listenHandyStaté();
+  listenHandyState();
   // Tenta até o canvas ter tamanho real (max 10 tentativas)
   let _tries = 0;
   function initChart(){
@@ -573,9 +573,9 @@ function enterApp(){
 // TIMER
 function startTimer(){
   if(timerInterval) return;
-  if(!session.token.activatédAt){
-    session.token.activatédAt=Daté.now();
-    updaté(ref(db,"tokens/"+session.code),{activatédAt:session.token.activatédAt});
+  if(!session.token.activatedAt){
+    session.token.activatedAt=Date.now();
+    update(ref(db,"tokens/"+session.code),{activatedAt:session.token.activatedAt});
   }
   timerInterval=setInterval(tickTimer,1000); tickTimer();
 }
@@ -585,7 +585,7 @@ function pauseTimer(){
   $("timerBadge").classList.add("stopped");
 }
 function tickTimer(){
-  const used=session.token.activatédAt?(Daté.now()-session.token.activatédAt):0;
+  const used=session.token.activatedAt?(Date.now()-session.token.activatedAt):0;
   const rem=Math.max(0,timerDuration-used);
   const b=$("timerBadge");
   b.textContent=formatTime(rem); b.classList.remove("stopped");
@@ -598,7 +598,7 @@ function formatTime(ms){
 }
 
 // ESTADO
-function listenHandyStaté(){
+function listenHandyState(){
   // Timeout: se Firebase não responder em 4s, mostra offline
   const fbTimeout = setTimeout(()=>{
     if($("statusText").textContent === "Aguardando conexão..."){
@@ -608,7 +608,7 @@ function listenHandyStaté(){
     }
   }, 4000);
 
-  onValue(ref(db,"handy/staté"), snap=>{
+  onValue(ref(db,"handy/state"), snap=>{
     clearTimeout(fbTimeout);
     const s=snap.val()||{};
     $("statusDot").className="status-dot "+(s.online?"online":"offline");
@@ -663,8 +663,8 @@ function doStop(){
   document.querySelectorAll(".btn-preset").forEach(b=>b.classList.remove("active"));
   document.querySelector(".btn-preset.zero").classList.add("active");
   velNum.textContent=0; slider.value=0; slider.style.setProperty("--val","0%");
-  updatéPatternBadge("Parado");
-  updatéSliderLock("steady");
+  updatePatternBadge("Parado");
+  updateSliderLock("steady");
   const ph=$("patternHint"); if(ph){ ph.textContent="Direto: velocidade exata do slider, sem variacao"; ph.classList.remove("locked"); }
 }
 
@@ -675,8 +675,8 @@ document.querySelectorAll(".btn-pattern").forEach(btn=>{
     document.querySelectorAll(".btn-pattern").forEach(b=>b.classList.remove("active"));
     btn.classList.add("active");
     const name=btn.querySelector(".pat-name").textContent;
-    updatéPatternBadge(name);
-    updatéSliderLock(currentPattern);
+    updatePatternBadge(name);
+    updateSliderLock(currentPattern);
     if(isRunning || ansiosoOn){
       stopPatternLoop();
       startPatternLoop(currentPattern, currentVel);
@@ -690,7 +690,7 @@ const LOCKED_PATTERNS = ["tease","random"]; // onda usa slider como amplitude ma
 
 function isPatternLocked(pat){ return LOCKED_PATTERNS.indexOf(pat) !== -1; }
 
-function updatéSliderLock(pat){
+function updateSliderLock(pat){
   const s = $("velSlider");
   const p = $("velPresets");
   const h = $("patternHint");
@@ -711,7 +711,7 @@ function updatéSliderLock(pat){
   } else if(pat==="pulse"){
     s.classList.remove("locked"); if(p) p.classList.remove("locked");
     if(h){ h.textContent="Pulso: alterna entre a velocidade e 30% dela"; h.classList.remove("locked"); }
-  } else if(pat==="escalaté"){
+  } else if(pat==="escalate"){
     s.classList.remove("locked"); if(p) p.classList.remove("locked");
     if(h){ h.textContent="Crescente: sobe gradualmente até a velocidade escolhida"; h.classList.remove("locked"); }
   }
@@ -719,7 +719,7 @@ function updatéSliderLock(pat){
 
 function startPatternLoop(pat, baseVel){
   stopPatternLoop();
-  updatéSliderLock(pat);
+  updateSliderLock(pat);
   if(pat==="steady"){
     // Manual: envia a velocidade atual do slider imediatamente
     if(baseVel > 0){
@@ -758,7 +758,7 @@ function startPatternLoop(pat, baseVel){
       sendCmd({type:"velocity", value:v});
       return;
     }
-    else if(pat==="escalaté"){
+    else if(pat==="escalate"){
       cur = Math.min(baseVel, cur + 3);
       v = cur;
       v = Math.max(1, Math.min(100, v));
@@ -776,7 +776,7 @@ function startPatternLoop(pat, baseVel){
 }
 function stopPatternLoop(){ if(patternInterval){ clearInterval(patternInterval); patternInterval=null; } }
 
-function updatéPatternBadge(name){
+function updatePatternBadge(name){
   const el=document.getElementById("chartPatternLabel");
   if(!el) return;
   el.textContent=name;
@@ -788,7 +788,7 @@ function updatéPatternBadge(name){
   el.style.borderColor="rgba("+rgb[0]+","+rgb[1]+","+rgb[2]+",0.4)";
 }
 
-async function sendCmd(cmd){ await set(ref(db,"handy/command"),{...cmd,from:session.code,ts:Daté.now()}); }
+async function sendCmd(cmd){ await set(ref(db,"handy/command"),{...cmd,from:session.code,ts:Date.now()}); }
 
 // ADMIN
 async function loadAdminTokens(){
@@ -796,21 +796,21 @@ async function loadAdminTokens(){
   const snap=await get(ref(db,"tokens"));
   grid.innerHTML="";
   if(!snap.exists()){ grid.innerHTML="<div style=\"color:var(--muted);font-size:13px\">Nenhum token ainda.</div>"; return; }
-  const now=Daté.now();
+  const now=Date.now();
   snap.forEach(child=>{
     const t=child.val();
     let cls,label;
     if(t.revoked){cls="expired";label="Revogado";}
-    else if(!t.activatédAt){cls="pending";label="Aguardando";}
-    else if(now-t.activatédAt>t.duration){cls="expired";label="Expirado";}
+    else if(!t.activatedAt){cls="pending";label="Aguardando";}
+    else if(now-t.activatedAt>t.duration){cls="expired";label="Expirado";}
     else{cls="active";label="Ativo";}
-    const used=t.activatédAt?Math.max(0,now-t.activatédAt):0;
+    const used=t.activatedAt?Math.max(0,now-t.activatedAt):0;
     const rem=Math.max(0,t.duration-used);
-    const div=document.creatéElement("div");
+    const div=document.createElement("div");
     div.className="token-card";
     div.innerHTML="<div class=\"token-code\">"+t.code+"</div><div class=\"token-info\">Duracao: "+(t.duration/60000).toFixed(0)+"min<br>Restante: "+formatTime(rem)+"<br><span class=\"token-badge "+cls+"\">"+label+"</span></div><button class=\"btn-revoke\" data-code=\""+t.code+"\">Revogar</button>";
     div.querySelector(".btn-revoke").onclick=async()=>{
-      await updaté(ref(db,"tokens/"+t.code),{revoked:true});
+      await update(ref(db,"tokens/"+t.code),{revoked:true});
       showToast("ok","Token "+t.code+" revogado"); loadAdminTokens();
     };
     grid.appendChild(div);
