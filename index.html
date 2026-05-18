@@ -99,7 +99,7 @@
       text-transform:none;letter-spacing:0;transition:all .3s;
     }
     .chart-wrap{position:relative;height:150px;width:100%;}
-    #velChart{display:block;width:100%;height:130px;border-radius:8px;}
+    #velChart{display:block;width:100%;height:130px;border-radius:8px;filter:blur(0.3px);}
 
     /* CARD */
     .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;}
@@ -276,7 +276,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.2.7</div>
+<div class="version-tag">v1.2.8</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -317,7 +317,7 @@ let   sampleInterval = null;
 function resizeChart(){
   if(!canvas || !ctx) return;
   const wrap = canvas.parentElement;
-  const dpr  = Math.min(window.devicePixelRatio || 1, 3); // max 3x
+  const dpr  = Math.max(window.devicePixelRatio || 1, 2); // min 2x para antialiasing
   const W    = wrap.offsetWidth  || 800;
   const H    = wrap.offsetHeight || 130;
   canvas.width  = W * dpr;
@@ -444,11 +444,11 @@ function drawChart(){
     }
   }
   ctx.strokeStyle=clr.line;
-  ctx.lineWidth=2;
+  ctx.lineWidth=1.5;
   ctx.lineJoin="round";
   ctx.lineCap="round";
   ctx.shadowColor=clr.line;
-  ctx.shadowBlur=4;
+  ctx.shadowBlur=6;
   ctx.stroke();
   ctx.shadowBlur=0;
 
