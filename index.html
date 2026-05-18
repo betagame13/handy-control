@@ -278,7 +278,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="version-tag">v1.1.8</div>
+<div class="version-tag">v1.1.9</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -396,9 +396,8 @@ function drawChart(){
 
   const clr = PATTERN_COLORS[currentPattern] || PATTERN_COLORS.steady;
   const nowMs = performance.now();
-  const nowS  = nowMs / 1000;
 
-  // ONDA: desenha matematicamente pixel a pixel — zero escadinha garantido
+  // Todos os padroes: desenha matematicamente pixel a pixel — zero escadinha garantido
   if(currentPattern === "wave" && (isRunning || ansiosoOn)){
     const amp  = currentBaseVel / 100;
     const freq = 2.0;
@@ -426,7 +425,7 @@ function drawChart(){
     gw.addColorStop(0, clr.fill); gw.addColorStop(1,"rgba(0,0,0,0)");
     ctx.fillStyle=gw; ctx.fill();
     // Ponto pulsante
-    const lnorm = (Math.sin((nowS + wavePhaseOffset) * Math.PI * freq) + 1) / 2;
+    
     const lv    = lnorm * amp * 100;
     const ly    = velY(lv, H);
     const pulse = 0.65 + 0.35 * Math.sin(nowMs * 0.007);
@@ -810,7 +809,7 @@ function startWaveRaf(baseVel){
     const norm = (Math.sin(t * Math.PI * 2.0) + 1) / 2; // ciclo ~1s rapido
     const vf   = norm * baseVel;
     currentVel = vf;
-    pushVel(vf);
+    pushVel(vf); // float puro — grafico liso
     if(vf < 2) sendCmd({type:"stop"});
     else        sendCmd({type:"velocity", value: Math.round(vf)});
     waveRaf = requestAnimationFrame(loop);
