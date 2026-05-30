@@ -182,6 +182,21 @@
     .toast.ok{border-color:var(--green);color:var(--green);}
     .toast.err{border-color:var(--red);color:var(--red);}
     .toast.info{border-color:var(--purple);color:#b39dff;}
+    /* AVISO CENTRAL (estilo parecido com o toast da extensao) */
+    .warn-modal{
+      position:fixed;top:50%;left:50%;
+      transform:translate(-50%,-50%) scale(0.85);
+      background:var(--surface2);border:1px solid var(--red);
+      border-radius:16px;padding:22px 26px;
+      min-width:240px;max-width:320px;text-align:center;
+      z-index:99999;opacity:0;pointer-events:none;
+      transition:all .28s cubic-bezier(.34,1.56,.64,1);
+      box-shadow:0 16px 50px rgba(244,67,54,.35);
+    }
+    .warn-modal.show{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto;}
+    .warn-icon{font-size:34px;margin-bottom:8px;}
+    .warn-title{font-size:16px;font-weight:800;color:var(--red);margin-bottom:6px;}
+    .warn-msg{font-size:13px;color:#bbb;line-height:1.5;}
     .hidden{display:none!important;}
     .version-tag{
       position:fixed;bottom:10px;right:12px;
@@ -279,6 +294,11 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="warn-modal" id="warnModal">
+  <div class="warn-icon">⚠️</div>
+  <div class="warn-title">Handy desconectado</div>
+  <div class="warn-msg">Avise a modelo para reconectar. Enquanto o status estiver vermelho, o controle não vai funcionar.</div>
+</div>
 <div class="version-tag">v1.3.3</div>
 
 <script type="module">
@@ -303,6 +323,7 @@ const $ = id => document.getElementById(id);
 
 let session=null,isAdmin=false,timerInterval=null,timerDuration=0;
 let isRunning=false,ansiosoOn=false,currentPattern="steady",patternInterval=null,currentBaseVel=50;
+let handyConnected=false, lastHandyState={online:false,ts:0,mode:""}, connStaleTimer=null;
 
 // GRAFICO — renderizacao fluida 60fps com interpolacao bezier
 const canvas = $("velChart");
@@ -607,15 +628,28 @@ function listenHandyState(){
   onValue(ref(db,"handy/state"), snap=>{
     clearTimeout(fbTimeout);
     const s=snap.val()||{};
-    $("statusDot").className="status-dot "+(s.online?"online":"offline");
-    $("statusText").textContent=s.online?"Handy conectado":"Handy offline";
-    $("statusMode").textContent=s.mode||"Parado";
+    lastHandyState={online:!!s.online, ts:s.ts||0, mode:s.mode||""};
+    applyConnState();
   }, err=>{
     clearTimeout(fbTimeout);
+    handyConnected=false;
     $("statusDot").className="status-dot offline";
     $("statusText").textContent="Erro Firebase — verifique as credenciais";
     $("statusMode").textContent="Sem conexão";
   });
+
+  // Reavalia o "frescor" a cada 5s: se a extensao parar de enviar, vira vermelho sozinho
+  if(connStaleTimer) clearInterval(connStaleTimer);
+  connStaleTimer=setInterval(applyConnState, 5000);
+}
+
+// Verde SO se a extensao confirmou conexao real (online via API do Handy) E o status e recente (<20s)
+function applyConnState(){
+  const fresh = lastHandyState.ts && (Date.now()-lastHandyState.ts < 20000);
+  handyConnected = !!(lastHandyState.online && fresh);
+  $("statusDot").className="status-dot "+(handyConnected?"online":"offline");
+  $("statusText").textContent=handyConnected?"Handy conectado":"Handy offline";
+  $("statusMode").textContent=handyConnected?(lastHandyState.mode||"Parado"):"Parado";
 }
 
 // SLIDER
@@ -623,6 +657,14 @@ const slider=$("velSlider"), velNum=$("velNumber");
 
 function setVel(v){ currentBaseVel = v;
   v=Math.max(0,Math.min(100,v));
+  // Se o Handy nao estiver conectado de verdade, nao deixa ativar e avisa
+  if(v>0 && !handyConnected){
+    showWarn();
+    slider.value=0; slider.style.setProperty("--val","0%"); velNum.textContent=0;
+    document.querySelectorAll(".btn-preset").forEach(b=>b.classList.remove("active"));
+    document.querySelector(".btn-preset.zero").classList.add("active");
+    return;
+  }
   slider.value=v; velNum.textContent=v;
   slider.style.setProperty("--val",v+"%");
   currentVel=v;
@@ -667,6 +709,7 @@ function doStop(){
 // PADROES
 document.querySelectorAll(".btn-pattern").forEach(btn=>{
   btn.addEventListener("click",()=>{
+    if(!handyConnected){ showWarn(); return; }
     currentPattern=btn.dataset.pattern;
     document.querySelectorAll(".btn-pattern").forEach(b=>b.classList.remove("active"));
     btn.classList.add("active");
@@ -860,6 +903,12 @@ let toastT;
 function showToast(type,msg){
   const t=$("toast"); t.textContent=msg; t.className="toast "+type+" show";
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),3000);
+}
+let warnT;
+function showWarn(){
+  const w=$("warnModal"); if(!w) return;
+  w.classList.add("show");
+  clearTimeout(warnT); warnT=setTimeout(()=>w.classList.remove("show"),3500);
 }
 </script>
 </body>
