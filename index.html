@@ -685,18 +685,19 @@ document.querySelectorAll(".btn-pattern").forEach(btn=>{
   });
 });
 
-// Agora TODOS os padroes usam o slider como teto de intensidade (nada travado)
-const LOCKED_PATTERNS = [];
+// tease e random IGNORAM o slider (usam 0-100% proprio e travam o controle);
+// os outros usam o slider como teto/maximo de intensidade
+const LOCKED_PATTERNS = ["tease","random"];
 
 function isPatternLocked(pat){ return LOCKED_PATTERNS.indexOf(pat) !== -1; }
 
 const PATTERN_HINTS = {
   steady:   "Manual: você controla direto pelo slider",
-  wave:     "Onda: sobe e desce suave, respirando até o teto do slider",
-  pulse:    "Pulso: batidas ritmadas, sem parar de vez",
-  random:   "Aleatório: variações suaves até o teto do slider",
-  escalate: "Crescente: sobe gradual e reinicia, em ciclos",
-  tease:    "Tease: sobe de 0% até o máximo e corta pra 0 (edging)"
+  wave:     "Onda: oscila de 0% até o valor do slider",
+  pulse:    "Pulso: batida de coração (forte-fraco) até o slider",
+  random:   "Aleatório: sorteia 0% a 100% livremente",
+  escalate: "Crescente: sobe gradual até o valor do slider",
+  tease:    "Tease: alterna 0% ↔ 100% automaticamente (edging)"
 };
 
 function updateSliderLock(pat){
@@ -704,26 +705,30 @@ function updateSliderLock(pat){
   const p = $("velPresets");
   const h = $("patternHint");
   if(!s) return;
-  s.classList.remove("locked"); if(p) p.classList.remove("locked");
-  if(h){ h.textContent = PATTERN_HINTS[pat] || PATTERN_HINTS.steady; h.classList.remove("locked"); }
+  const locked = isPatternLocked(pat);
+  s.classList.toggle("locked", locked); if(p) p.classList.toggle("locked", locked);
+  if(h){ h.textContent = PATTERN_HINTS[pat] || PATTERN_HINTS.steady; h.classList.toggle("locked", locked); }
 }
 
 // Velocidade suave de cada padrao — MESMA logica do background.js (aparelho).
 // baseVel = teto (slider). Sem cortes secos: melhor p/ curso curto.
 function patternVel(pat, base, t, st){
-  if(pat==="wave") return base*(0.55+0.45*Math.sin(t*1.5));        // swell continuo e fluido
-  if(pat==="pulse"){                                               // batida ritmada (sobe/desce marcado)
-    const pp=(t%0.9)/0.9;
-    return pp<0.45 ? base : base*0.35;
+  if(pat==="wave") return base*((Math.sin(t*1.6)+1)/2);           // oscila 0% -> slider
+  if(pat==="pulse"){                                               // batida de coracao (lub-dub-pausa)
+    const ph=(t%1.4)/1.4;
+    if(ph<0.14) return base;        // lub
+    if(ph<0.25) return base*0.2;    // vale
+    if(ph<0.42) return base*0.9;    // dub
+    return base*0.1;                // pausa do batimento
   }
-  if(pat==="escalate") return base*(0.2+0.8*((t%5)/5));            // subida direcional que reinicia
+  if(pat==="escalate") return base*(0.15+0.85*((t%5)/5));         // sobe gradual ate o slider e reinicia
   if(pat==="tease"){                                               // edging: 0% -> 100% -> corta pra 0
     const tp=(t%7)/7;
     if(tp<0.65) return base*(tp/0.65);
     const r=(tp-0.65)/0.35; return base*Math.max(0, 1-r*3);
   }
-  if(pat==="random"){                                             // alvos imprevisiveis com leve easing
-    if(st.last===undefined || t-st.last>1.1){ st.last=t; st.target=base*(0.3+Math.random()*0.7); }
+  if(pat==="random"){                                             // sorteia 0-100% com leve easing
+    if(st.last===undefined || t-st.last>1.1){ st.last=t; st.target=base*(0.1+Math.random()*0.9); }
     if(st.cur===undefined) st.cur=base;
     st.cur += (st.target-st.cur)*0.15;
     return st.cur;
@@ -747,16 +752,19 @@ function startPatternLoop(pat, baseVel){
     return;
   }
 
-  // Padroes automaticos: manda 1 "start" (o background sintetiza o movimento
-  // suave no aparelho) e roda um loop local SO p/ o grafico ficar fluido.
+  // tease/random ignoram o slider (range proprio 0-100); os outros usam o slider como teto
+  const base = isPatternLocked(pat) ? 100 : baseVel;
+
+  // manda 1 "start" (o background sintetiza o movimento no aparelho)
+  // e roda um loop local SO p/ o grafico ficar fluido.
   if(!isRunning) isRunning = true;
-  sendCmd({type:"start", velocity:Math.round(baseVel), pattern:pat});
+  sendCmd({type:"start", velocity:Math.round(base), pattern:pat});
 
   const t0 = performance.now();
-  const st = { cur: baseVel, target: baseVel };
+  const st = { cur: base, target: base };
   patternInterval = setInterval(()=>{
     const tSec = (performance.now()-t0)/1000;
-    let v = patternVel(pat, baseVel, tSec, st);
+    let v = patternVel(pat, base, tSec, st);
     v = Math.max(0, Math.min(100, v));
     currentVel = v;
     pushVel(v);
