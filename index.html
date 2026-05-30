@@ -695,7 +695,7 @@ const PATTERN_HINTS = {
   wave:     "Onda: sobe e desce suave, respirando até o teto do slider",
   pulse:    "Pulso: batidas ritmadas, sem parar de vez",
   random:   "Aleatório: variações suaves até o teto do slider",
-  escalate: "Crescente: sobe gradual e alivia, em ciclos",
+  escalate: "Crescente: sobe gradual e reinicia, em ciclos",
   tease:    "Tease: provoca subindo e aliviando (edging)"
 };
 
@@ -710,21 +710,25 @@ function updateSliderLock(pat){
 
 // Velocidade suave de cada padrao — MESMA logica do background.js (aparelho).
 // baseVel = teto (slider). Sem cortes secos: melhor p/ curso curto.
-function patternVel(pat, baseVel, tSec, st){
-  if(pat==="wave")     return baseVel*(0.775+0.225*Math.sin(tSec*1.57)); // respiracao 55-100%
-  if(pat==="pulse")    return baseVel*(0.78 +0.22 *Math.sin(tSec*6.0));  // pulso ritmico, sem parar
-  if(pat==="tease")    return baseVel*(0.65 +0.35 *Math.sin(tSec*0.7));  // edging: sobe e alivia
-  if(pat==="escalate"){
-    const period=6, ph=(tSec%period)/period;
-    const tri = ph<0.75 ? ph/0.75 : 1-(ph-0.75)/0.25;                    // sobe lento, alivia rapido
-    return baseVel*(0.25+0.75*tri);
+function patternVel(pat, base, t, st){
+  if(pat==="wave") return base*(0.55+0.45*Math.sin(t*1.5));        // swell continuo e fluido
+  if(pat==="pulse"){                                               // batida ritmada (sobe/desce marcado)
+    const pp=(t%0.9)/0.9;
+    return pp<0.45 ? base : base*0.35;
   }
-  if(pat==="random"){
-    if(st.target===undefined || Math.abs(st.cur-st.target)<2) st.target = baseVel*(0.45+Math.random()*0.55);
-    st.cur += (st.target-st.cur)*0.18;                                   // easing — sem saltos
+  if(pat==="escalate") return base*(0.2+0.8*((t%5)/5));            // subida direcional que reinicia
+  if(pat==="tease"){                                               // edging: sobe e recua/segura baixo
+    const tp=(t%7)/7;
+    if(tp<0.6) return base*(0.4+0.6*(tp/0.6));
+    const r=(tp-0.6)/0.4; return base*Math.max(0.25, 1-r*1.5);
+  }
+  if(pat==="random"){                                             // alvos imprevisiveis com leve easing
+    if(st.last===undefined || t-st.last>1.1){ st.last=t; st.target=base*(0.3+Math.random()*0.7); }
+    if(st.cur===undefined) st.cur=base;
+    st.cur += (st.target-st.cur)*0.15;
     return st.cur;
   }
-  return baseVel;
+  return base;
 }
 
 function startPatternLoop(pat, baseVel){
