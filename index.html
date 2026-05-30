@@ -7,7 +7,7 @@
   <style>
     :root {
       --bg:#0a0a0f;--surface:#13131f;--surface2:#1a1a2e;--border:#252540;
-      --purple:#7c4dff;--purple2:#e040fb;--green:#4caf50;--orange:#ffb74d;
+      --purple:#ff2d9b;--purple2:#a23cff;--green:#4caf50;--orange:#ffb74d;
       --red:#f44336;--text:#e8e8f0;--muted:#666;
     }
     *{box-sizing:border-box;margin:0;padding:0;}
@@ -16,7 +16,7 @@
     /* LOGIN */
     #loginWrap{
       min-height:100vh;display:flex;align-items:center;justify-content:center;
-      background:radial-gradient(ellipse at 50% 0%,rgba(124,77,255,.15) 0%,transparent 70%);
+      background:radial-gradient(ellipse at 50% 0%,rgba(255,45,155,.15) 0%,transparent 70%);
     }
     .login-card{
       background:var(--surface);border:1px solid var(--border);
@@ -26,7 +26,7 @@
     .login-logo{font-size:48px;margin-bottom:12px;}
     .login-title{
       font-size:22px;font-weight:800;margin-bottom:4px;
-      background:linear-gradient(135deg,#e040fb,#7c4dff);
+      background:linear-gradient(135deg,#a23cff,#ff2d9b);
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;
     }
     .login-sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
@@ -56,7 +56,7 @@
       display:flex;align-items:center;justify-content:space-between;
       position:sticky;top:0;z-index:100;
     }
-    .navbar-logo{font-size:15px;font-weight:800;background:linear-gradient(135deg,#e040fb,#7c4dff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .navbar-logo{font-size:15px;font-weight:800;background:linear-gradient(135deg,#a23cff,#ff2d9b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
     .navbar-right{display:flex;align-items:center;gap:12px;}
     .navbar-user{font-size:12px;color:var(--muted);}
     .timer-badge{
@@ -85,7 +85,7 @@
     .status-dot.online{background:var(--green);box-shadow:0 0 8px var(--green);}
     .status-dot.offline{background:var(--red);}
     .status-text{font-size:13px;font-weight:600;flex:1;}
-    .status-mode{font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(124,77,255,.15);color:var(--purple);border:1px solid rgba(124,77,255,.3);}
+    .status-mode{font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(255,45,155,.15);color:var(--purple);border:1px solid rgba(255,45,155,.3);}
 
     /* GRAFICO */
     .chart-card{
@@ -95,7 +95,7 @@
     .chart-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
     .chart-pattern-badge{
       font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;
-      background:rgba(124,77,255,.15);color:var(--purple);border:1px solid rgba(124,77,255,.3);
+      background:rgba(255,45,155,.15);color:var(--purple);border:1px solid rgba(255,45,155,.3);
       text-transform:none;letter-spacing:0;transition:all .3s;
     }
     .chart-wrap{position:relative;height:150px;width:100%;}
@@ -107,7 +107,7 @@
 
     /* SLIDER */
     .vel-display{text-align:center;margin-bottom:12px;}
-    .vel-number{font-size:42px;font-weight:900;line-height:1;background:linear-gradient(135deg,#7c4dff,#e040fb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .vel-number{font-size:42px;font-weight:900;line-height:1;background:linear-gradient(135deg,#ff2d9b,#a23cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
     .vel-unit{font-size:13px;color:var(--muted);margin-top:2px;}
     .vel-slider{
       width:100%;height:8px;border-radius:4px;
@@ -128,7 +128,7 @@
     .pattern-hint.locked{ color:var(--purple); }
     .vel-slider::-webkit-slider-thumb{
       -webkit-appearance:none;width:28px;height:28px;border-radius:50%;
-      background:#fff;box-shadow:0 2px 12px rgba(124,77,255,.8);cursor:pointer;
+      background:#fff;box-shadow:0 2px 12px rgba(255,45,155,.8);cursor:pointer;
       transition:transform .1s;
     }
     .vel-slider::-webkit-slider-thumb:hover{transform:scale(1.15);}
@@ -152,8 +152,8 @@
       color:var(--text);font-size:12px;font-weight:600;
       cursor:pointer;transition:all .2s;text-align:center;
     }
-    .btn-pattern:hover{border-color:var(--purple);background:rgba(124,77,255,.1);}
-    .btn-pattern.active{border-color:var(--purple);background:rgba(124,77,255,.15);color:var(--purple);}
+    .btn-pattern:hover{border-color:var(--purple);background:rgba(255,45,155,.1);}
+    .btn-pattern.active{border-color:var(--purple);background:rgba(255,45,155,.15);color:var(--purple);}
     .pat-icon{font-size:18px;display:block;margin-bottom:3px;}
     .pat-name{display:block;}
     .pat-desc{display:block;font-size:10px;color:var(--muted);margin-top:1px;}
@@ -199,7 +199,7 @@
 <!-- LOGIN -->
 <div id="loginWrap">
   <div class="login-card">
-    <div class="login-logo">&#129302;</div>
+    <div class="login-logo"><img src="icon128.png" alt="Handy Control" style="width:64px;height:64px;border-radius:16px;vertical-align:middle;"></div>
     <div class="login-title">Handy Control</div>
     <div class="login-sub">Digite seu token de acesso</div>
     <input id="tokenInput" type="text" placeholder="Ex: ABC-XYZ" autocomplete="off" spellcheck="false" maxlength="30">
@@ -211,7 +211,7 @@
 <!-- APP -->
 <div class="app" id="app">
   <nav class="navbar">
-    <div class="navbar-logo">&#129302; Handy Control</div>
+    <div class="navbar-logo"><img src="icon128.png" alt="" style="width:22px;height:22px;border-radius:6px;vertical-align:middle;margin-right:6px;">Handy Control</div>
     <div class="navbar-right">
       <div class="navbar-user" id="navUser"></div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;" id="timerWrap" class="hidden">
@@ -264,7 +264,7 @@
         <button class="btn-pattern" data-pattern="pulse"><span class="pat-icon">&#128147;</span><span class="pat-name">Pulso</span><span class="pat-desc">Pulsos rápidos</span></button>
         <button class="btn-pattern" data-pattern="random"><span class="pat-icon">&#127922;</span><span class="pat-name">Aleatório</span><span class="pat-desc">Velocidade variada</span></button>
         <button class="btn-pattern" data-pattern="escalate"><span class="pat-icon">&#128200;</span><span class="pat-name">Crescente</span><span class="pat-desc">Começa devagar</span></button>
-        <button class="btn-pattern" data-pattern="tease"><span class="pat-icon">&#128527;</span><span class="pat-name">Tease</span><span class="pat-desc">Para e volta</span></button>
+        <button class="btn-pattern" data-pattern="tease"><span class="pat-icon">&#128527;</span><span class="pat-name">Tease</span><span class="pat-desc">Provoca e alivia</span></button>
       </div>
     </div>
 
@@ -360,12 +360,12 @@ function startSampling(){
 
 // Cores por padrao
 const PATTERN_COLORS = {
-  steady:   {line:"rgba(124,77,255,1)",   fill:"rgba(124,77,255,0.22)"},
+  steady:   {line:"rgba(255,45,155,1)",   fill:"rgba(255,45,155,0.22)"},
   wave:     {line:"rgba(64,196,255,1)",    fill:"rgba(64,196,255,0.18)"},
   pulse:    {line:"rgba(244,67,54,1)",     fill:"rgba(244,67,54,0.18)"},
   random:   {line:"rgba(255,183,77,1)",    fill:"rgba(255,183,77,0.18)"},
   escalate: {line:"rgba(129,199,132,1)",   fill:"rgba(129,199,132,0.18)"},
-  tease:    {line:"rgba(224,64,251,1)",    fill:"rgba(224,64,251,0.18)"},
+  tease:    {line:"rgba(162,60,255,1)",    fill:"rgba(162,60,255,0.18)"},
 };
 
 function drawChart(){
@@ -685,62 +685,54 @@ document.querySelectorAll(".btn-pattern").forEach(btn=>{
   });
 });
 
-// Padroes que ignoram o slider e usam 0-100% proprios
-const LOCKED_PATTERNS = ["tease","random"]; // onda usa slider como amplitude maxima
+// Agora TODOS os padroes usam o slider como teto de intensidade (nada travado)
+const LOCKED_PATTERNS = [];
 
 function isPatternLocked(pat){ return LOCKED_PATTERNS.indexOf(pat) !== -1; }
+
+const PATTERN_HINTS = {
+  steady:   "Manual: você controla direto pelo slider",
+  wave:     "Onda: sobe e desce suave, respirando até o teto do slider",
+  pulse:    "Pulso: batidas ritmadas, sem parar de vez",
+  random:   "Aleatório: variações suaves até o teto do slider",
+  escalate: "Crescente: sobe gradual e alivia, em ciclos",
+  tease:    "Tease: provoca subindo e aliviando (edging)"
+};
 
 function updateSliderLock(pat){
   const s = $("velSlider");
   const p = $("velPresets");
   const h = $("patternHint");
   if(!s) return;
+  s.classList.remove("locked"); if(p) p.classList.remove("locked");
+  if(h){ h.textContent = PATTERN_HINTS[pat] || PATTERN_HINTS.steady; h.classList.remove("locked"); }
+}
 
-  if(pat==="tease"){
-    s.classList.add("locked"); if(p) p.classList.add("locked");
-    if(h){ h.textContent="Tease: alterna 0% ↔ 100% automaticamente"; h.classList.add("locked"); }
-  } else if(pat==="random"){
-    s.classList.add("locked"); if(p) p.classList.add("locked");
-    if(h){ h.textContent="Aleatório: sorteia 0% a 100% livremente"; h.classList.add("locked"); }
-  } else if(pat==="steady"){
-    s.classList.remove("locked"); if(p) p.classList.remove("locked");
-    if(h){ h.textContent="Manual: você controla direto pelo slider"; h.classList.remove("locked"); }
-  } else if(pat==="wave"){
-    s.classList.remove("locked"); if(p) p.classList.remove("locked");
-    if(h){ h.textContent="Onda: oscila de 0% até o valor do slider"; h.classList.remove("locked"); }
-  } else if(pat==="pulse"){
-    s.classList.remove("locked"); if(p) p.classList.remove("locked");
-    if(h){ h.textContent="Pulso: batida rápida ao pico e pausa"; h.classList.remove("locked"); }
-  } else if(pat==="escalate"){
-    s.classList.remove("locked"); if(p) p.classList.remove("locked");
-    if(h){ h.textContent="Crescente: sobe gradualmente até a velocidade escolhida"; h.classList.remove("locked"); }
+// Velocidade suave de cada padrao — MESMA logica do background.js (aparelho).
+// baseVel = teto (slider). Sem cortes secos: melhor p/ curso curto.
+function patternVel(pat, baseVel, tSec, st){
+  if(pat==="wave")     return baseVel*(0.775+0.225*Math.sin(tSec*1.57)); // respiracao 55-100%
+  if(pat==="pulse")    return baseVel*(0.78 +0.22 *Math.sin(tSec*6.0));  // pulso ritmico, sem parar
+  if(pat==="tease")    return baseVel*(0.65 +0.35 *Math.sin(tSec*0.7));  // edging: sobe e alivia
+  if(pat==="escalate"){
+    const period=6, ph=(tSec%period)/period;
+    const tri = ph<0.75 ? ph/0.75 : 1-(ph-0.75)/0.25;                    // sobe lento, alivia rapido
+    return baseVel*(0.25+0.75*tri);
   }
+  if(pat==="random"){
+    if(st.target===undefined || Math.abs(st.cur-st.target)<2) st.target = baseVel*(0.45+Math.random()*0.55);
+    st.cur += (st.target-st.cur)*0.18;                                   // easing — sem saltos
+    return st.cur;
+  }
+  return baseVel;
 }
 
 function startPatternLoop(pat, baseVel){
   stopPatternLoop();
   updateSliderLock(pat);
-  if(pat==="wave"){
-    // Onda: setInterval a 16ms — nao conflita com chartRaf
-    let waveLastCmd = 0;
-    const waveInt = setInterval(()=>{
-      const now  = performance.now();
-      const t    = now / 1000;
-      const norm = (Math.sin(t * Math.PI * 1.2) + 1) / 2; // ciclo ~3.3s — build-up masculino
-      const vf   = norm * baseVel;
-      currentVel = vf;
-      pushVel(vf);
-      if(now - waveLastCmd >= 50){
-        waveLastCmd = now;
-        if(vf < 2) sendCmd({type:"stop"});
-        else        sendCmd({type:"velocity", value: Math.round(vf)});
-      }
-    }, 16);
-    patternInterval = waveInt;
-    return;
-  }
+
   if(pat==="steady"){
-    // Manual: envia velocidade e inicia se necessario
+    // Manual: velocidade direta do slider
     currentVel = baseVel;
     if(baseVel > 0){
       if(!isRunning){ isRunning=true; sendCmd({type:"start", velocity:baseVel, pattern:"steady"}); }
@@ -751,44 +743,20 @@ function startPatternLoop(pat, baseVel){
     return;
   }
 
-  let tick=0, high=true, cur=1, escDir=1;
-  const interval = pat==="tease" ? 1200 : pat==="wave" ? 30 : pat==="pulse" ? 120 : pat==="escalate" ? 200 : 800;
+  // Padroes automaticos: manda 1 "start" (o background sintetiza o movimento
+  // suave no aparelho) e roda um loop local SO p/ o grafico ficar fluido.
+  if(!isRunning) isRunning = true;
+  sendCmd({type:"start", velocity:Math.round(baseVel), pattern:pat});
 
+  const t0 = performance.now();
+  const st = { cur: baseVel, target: baseVel };
   patternInterval = setInterval(()=>{
-    let v = baseVel;
-
-    if(pat==="pulse"){
-      // Pulso: alterna pico/zero ritmicamente
-      high = !high;
-      currentVel = high ? baseVel : 0;
-      if(high) sendCmd({type:"velocity", value:Math.round(baseVel)});
-      else     sendCmd({type:"stop"});
-      return;
-    }
-    else if(pat==="random"){
-      // Aleatório: 0-100% livre, ignora slider
-      v = Math.round(Math.random() * 100);
-      currentVel = v;
-      if(v < 5){ sendCmd({type:"stop"}); currentVel=0; return; }
-      sendCmd({type:"velocity", value:v});
-      return;
-    }
-    else if(pat==="escalate"){
-      cur += 8 * escDir;
-      if(cur >= baseVel){ cur = baseVel; escDir = -1; }
-      if(cur <= 1)      { cur = 1;       escDir =  1; }
-      v = Math.round(cur);
-    }
-    else if(pat==="tease"){
-      high = !high;
-      if(high){ currentVel=100; sendCmd({type:"velocity", value:100}); }
-      else    { currentVel=0;   sendCmd({type:"stop"}); }
-      return;
-    }
-
+    const tSec = (performance.now()-t0)/1000;
+    let v = patternVel(pat, baseVel, tSec, st);
+    v = Math.max(0, Math.min(100, v));
     currentVel = v;
-    sendCmd({type:"velocity", value:v});
-  }, interval);
+    pushVel(v);
+  }, 33); // ~30fps
 }
 function stopPatternLoop(){
   if(patternInterval){ clearInterval(patternInterval); patternInterval=null; }
