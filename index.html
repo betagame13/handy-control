@@ -696,7 +696,7 @@ const PATTERN_HINTS = {
   pulse:    "Pulso: batidas ritmadas, sem parar de vez",
   random:   "Aleatório: variações suaves até o teto do slider",
   escalate: "Crescente: sobe gradual e reinicia, em ciclos",
-  tease:    "Tease: provoca subindo e aliviando (edging)"
+  tease:    "Tease: sobe de 0% até o máximo e corta pra 0 (edging)"
 };
 
 function updateSliderLock(pat){
@@ -717,10 +717,10 @@ function patternVel(pat, base, t, st){
     return pp<0.45 ? base : base*0.35;
   }
   if(pat==="escalate") return base*(0.2+0.8*((t%5)/5));            // subida direcional que reinicia
-  if(pat==="tease"){                                               // edging: sobe e recua/segura baixo
+  if(pat==="tease"){                                               // edging: 0% -> 100% -> corta pra 0
     const tp=(t%7)/7;
-    if(tp<0.6) return base*(0.4+0.6*(tp/0.6));
-    const r=(tp-0.6)/0.4; return base*Math.max(0.25, 1-r*1.5);
+    if(tp<0.65) return base*(tp/0.65);
+    const r=(tp-0.65)/0.35; return base*Math.max(0, 1-r*3);
   }
   if(pat==="random"){                                             // alvos imprevisiveis com leve easing
     if(st.last===undefined || t-st.last>1.1){ st.last=t; st.target=base*(0.3+Math.random()*0.7); }
