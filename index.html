@@ -199,7 +199,7 @@
 <!-- LOGIN -->
 <div id="loginWrap">
   <div class="login-card">
-    <div class="login-logo"><img src="icon128.png" alt="Handy Control" style="width:64px;height:64px;border-radius:16px;vertical-align:middle;"></div>
+    <div class="login-logo"><img src="Icon23.png" alt="Handy Control" style="width:64px;height:64px;border-radius:16px;vertical-align:middle;"></div>
     <div class="login-title">Handy Control</div>
     <div class="login-sub">Digite seu token de acesso</div>
     <input id="tokenInput" type="text" placeholder="Ex: ABC-XYZ" autocomplete="off" spellcheck="false" maxlength="30">
@@ -211,7 +211,7 @@
 <!-- APP -->
 <div class="app" id="app">
   <nav class="navbar">
-    <div class="navbar-logo"><img src="icon128.png" alt="" style="width:22px;height:22px;border-radius:6px;vertical-align:middle;margin-right:6px;">Handy Control</div>
+    <div class="navbar-logo"><img src="Icon23.png" alt="" style="width:22px;height:22px;border-radius:6px;vertical-align:middle;margin-right:6px;">Handy Control</div>
     <div class="navbar-right">
       <div class="navbar-user" id="navUser"></div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;" id="timerWrap" class="hidden">
@@ -259,12 +259,12 @@
     <div class="card">
       <div class="card-title">Padrões de movimento</div>
       <div class="patterns">
-        <button class="btn-pattern active" data-pattern="steady"><span class="pat-icon">🖐</span><span class="pat-name">Manual</span><span class="pat-desc">Você controla</span></button>
-        <button class="btn-pattern" data-pattern="wave"><span class="pat-icon">&#12316;&#65039;</span><span class="pat-name">Onda</span><span class="pat-desc">Sobe e desce</span></button>
-        <button class="btn-pattern" data-pattern="pulse"><span class="pat-icon">&#128147;</span><span class="pat-name">Pulso</span><span class="pat-desc">Pulsos rápidos</span></button>
-        <button class="btn-pattern" data-pattern="random"><span class="pat-icon">&#127922;</span><span class="pat-name">Aleatório</span><span class="pat-desc">Velocidade variada</span></button>
-        <button class="btn-pattern" data-pattern="escalate"><span class="pat-icon">&#128200;</span><span class="pat-name">Crescente</span><span class="pat-desc">Começa devagar</span></button>
-        <button class="btn-pattern" data-pattern="tease"><span class="pat-icon">&#128527;</span><span class="pat-name">Tease</span><span class="pat-desc">Provoca e alivia</span></button>
+        <button class="btn-pattern active" data-pattern="steady"><span class="pat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg></span><span class="pat-name">Manual</span><span class="pat-desc">Você controla</span></button>
+        <button class="btn-pattern" data-pattern="wave"><span class="pat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 13c2.5-7 5.5-7 8 0s5.5 7 8 0"/></svg></span><span class="pat-name">Onda</span><span class="pat-desc">Sobe e desce</span></button>
+        <button class="btn-pattern" data-pattern="pulse"><span class="pat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span><span class="pat-name">Pulso</span><span class="pat-desc">Pulsos rápidos</span></button>
+        <button class="btn-pattern" data-pattern="random"><span class="pat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></span><span class="pat-name">Aleatório</span><span class="pat-desc">Velocidade variada</span></button>
+        <button class="btn-pattern" data-pattern="escalate"><span class="pat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg></span><span class="pat-name">Crescente</span><span class="pat-desc">Começa devagar</span></button>
+        <button class="btn-pattern" data-pattern="tease"><span class="pat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg></span><span class="pat-name">Tease</span><span class="pat-desc">Provoca e alivia</span></button>
       </div>
     </div>
 
