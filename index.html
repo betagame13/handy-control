@@ -554,18 +554,16 @@ function enterApp(){
   if(!isAdmin){
     const b=$("timerBadge"); $("timerWrap").classList.remove("hidden");
     timerDuration=session.token.duration;
-    // Se ja foi ativado antes, calcula quanto resta
     if(session.token.activatedAt){
       const used = Date.now() - session.token.activatedAt;
-      const rem  = Math.max(0, timerDuration - used);
-      b.textContent=formatTime(rem);
-      if(rem > 0) startTimer(); // retoma contagem
-      else logout(); // expirado
+      if(used >= timerDuration){ logout(); return; } // ja expirou
+      b.textContent=formatTime(Math.max(0, timerDuration - used));
     } else {
       // Ainda nao ativado — mostra total parado
       b.textContent=formatTime(timerDuration);
       b.classList.add("stopped");
     }
+    startSessionTimer(); // tica a cada 1s: conta so com Handy verde, congela no vermelho
   } else {
     $("adminSection").classList.remove("hidden");
     loadAdminTokens();
@@ -587,24 +585,40 @@ function enterApp(){
   setTimeout(initChart, 100);
 }
 
-// TIMER
-function startTimer(){
+// TIMER — o tempo so e consumido com o Handy CONECTADO (verde). No vermelho, congela.
+let lastActivatedSave=0;
+function startSessionTimer(){
   if(timerInterval) return;
+  timerInterval=setInterval(tickTimer,1000); tickTimer();
+}
+// Marca o inicio do tempo na 1a ativacao real (chamado so quando ha conexao)
+function ensureActivated(){
+  if(isAdmin || !session || !session.token) return;
   if(!session.token.activatedAt){
     session.token.activatedAt=Date.now();
     update(ref(db,"tokens/"+session.code),{activatedAt:session.token.activatedAt});
   }
-  timerInterval=setInterval(tickTimer,1000); tickTimer();
 }
-function pauseTimer(){
-  if(!timerInterval) return;
-  clearInterval(timerInterval); timerInterval=null;
-  $("timerBadge").classList.add("stopped");
+// Persiste o activatedAt (inclusive os deslocamentos do congelamento), com throttle
+function persistActivatedAt(){
+  const now=Date.now();
+  if(session && session.token && now-lastActivatedSave>10000){
+    lastActivatedSave=now;
+    update(ref(db,"tokens/"+session.code),{activatedAt:session.token.activatedAt});
+  }
 }
 function tickTimer(){
-  const used=session.token.activatedAt?(Date.now()-session.token.activatedAt):0;
-  const rem=Math.max(0,timerDuration-used);
   const b=$("timerBadge");
+  if(!session || !session.token || !session.token.activatedAt){ if(b) b.classList.add("stopped"); return; } // ainda nao ativado
+  if(!handyConnected){
+    // CONGELA: empurra a ativacao 1s pra frente -> o tempo NAO e consumido no vermelho
+    session.token.activatedAt += 1000;
+    persistActivatedAt();
+    if(b) b.classList.add("stopped");
+    return;
+  }
+  const used=Date.now()-session.token.activatedAt;
+  const rem=Math.max(0,timerDuration-used);
   b.textContent=formatTime(rem); b.classList.remove("stopped");
   if(rem<300000) b.classList.add("urgent");
   if(rem<=0){ clearInterval(timerInterval); timerInterval=null; doStop(); setTimeout(logout,3000); }
@@ -672,6 +686,7 @@ function setVel(v){ currentBaseVel = v;
   if(v===0){
     if(isRunning||ansiosoOn) doStop();
   } else {
+    ensureActivated(); // inicia a contagem na 1a ativacao (so chega aqui com Handy verde)
     if(isPatternLocked(currentPattern)){
       // Padrao bloqueado — slider não faz nada
       return;
@@ -696,7 +711,7 @@ document.querySelectorAll(".btn-preset").forEach(btn=>{
 
 function doStop(){
   isRunning=false; ansiosoOn=false; stopPatternLoop();
-  sendCmd({type:"stop"}); pauseTimer();
+  sendCmd({type:"stop"}); // o contador segue: conta com verde, congela no vermelho
   currentVel=0;
   document.querySelectorAll(".btn-preset").forEach(b=>b.classList.remove("active"));
   document.querySelector(".btn-preset.zero").classList.add("active");
