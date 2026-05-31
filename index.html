@@ -513,6 +513,25 @@ async function hashStr(str){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
 }
 
+// === TOKEN ASSINADO ===
+// Chave PUBLICA (pode ser publica). A privada fica SO na extensao da modelo.
+// O site so aceita logar tokens assinados com a privada -> ninguem forja login.
+const TOKEN_PUBKEY = {"crv":"P-256","ext":true,"key_ops":["verify"],"kty":"EC","x":"DgEZ68jzErO27HVE61OLv9GDsn-R0tWn-fjxYXgacVU","y":"BgAUUvxxSGGCuK3et71RcDm1pjy-Rp4dpdid6ClfaPw"};
+let _pubKeyP=null;
+function _getPubKey(){
+  if(!_pubKeyP) _pubKeyP = crypto.subtle.importKey('jwk', TOKEN_PUBKEY, {name:'ECDSA',namedCurve:'P-256'}, false, ['verify']);
+  return _pubKeyP;
+}
+function _b64ToBuf(b64){ const bin=atob(b64); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i); return u.buffer; }
+async function verifyTokenSig(token){
+  try{
+    if(!token || !token.sig || !token.code || !token.duration) return false;
+    const key = await _getPubKey();
+    const data = new TextEncoder().encode(token.code + '|' + token.duration);
+    return await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'}, key, _b64ToBuf(token.sig), data);
+  }catch(e){ return false; }
+}
+
 async function doLogin(){
   const raw = tokenInput.value.trim();
   const err = $("loginErr");
@@ -532,7 +551,7 @@ async function doLogin(){
   const code=raw.toUpperCase();
   err.textContent="Verificando...";
 
-  get(ref(db,"tokens/"+code)).then(snap=>{
+  get(ref(db,"tokens/"+code)).then(async snap=>{
     if(!snap.exists()){ err.textContent="Token inválido."; return; }
     const token=snap.val();
     if(token.revoked){ err.textContent="Token revogado."; return; }
@@ -540,6 +559,9 @@ async function doLogin(){
     if(token.activatedAt && now-token.activatedAt>token.duration){
       err.textContent="Token expirado."; return;
     }
+    // Assinatura: so loga se o token foi emitido pela modelo (assinado com a chave privada)
+    const assinado = await verifyTokenSig(token);
+    if(!assinado){ err.textContent="Token inválido."; return; }
     session={code,token}; isAdmin=false; enterApp();
   }).catch(e=>{
     console.error("Firebase erro:", e);
