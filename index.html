@@ -754,13 +754,10 @@ document.querySelectorAll(".btn-pattern").forEach(btn=>{
     updatePatternBadge(name);
     updateSliderLock(currentPattern);
     if(isRunning || ansiosoOn){
-      // Para steady usa valor do slider — para outros usa currentVel
-      const vel = currentPattern==="steady" ? parseInt(slider.value)||0 : currentVel;
+      // SEMPRE usa o valor do SLIDER como base/maximo (corrige o bug ao trocar de padrao).
+      // startPatternLoop ja envia o 'start' com a base certa (100 nos travados tease/random).
       stopPatternLoop();
-      startPatternLoop(currentPattern, vel);
-      if(currentPattern !== "steady"){
-        sendCmd({type:"start", velocity:Math.round(vel), pattern:currentPattern});
-      }
+      startPatternLoop(currentPattern, parseInt(slider.value)||0);
     }
   });
 });
@@ -790,6 +787,16 @@ function updateSliderLock(pat){
   if(h){ h.textContent = PATTERN_HINTS[pat] || PATTERN_HINTS.steady; h.classList.toggle("locked", locked); }
 }
 
+// Tease (edging p/ masturbador masculino): pula 0%<->100% INSTANTANEO, com tempos
+// variados — fica no 100% (estimulo) e corta pro 0% (negacao). [nivel%, segundos]
+const TEASE_SEQ = [[100,4],[0,2],[100,6],[0,3],[100,3],[0,4],[100,8],[0,2],[100,5],[0,5]];
+const TEASE_TOTAL = TEASE_SEQ.reduce((s,x)=>s+x[1],0);
+function teaseLevel(base, t){
+  let tt = ((t % TEASE_TOTAL) + TEASE_TOTAL) % TEASE_TOTAL;
+  for(let i=0;i<TEASE_SEQ.length;i++){ if(tt < TEASE_SEQ[i][1]) return base*TEASE_SEQ[i][0]/100; tt -= TEASE_SEQ[i][1]; }
+  return 0;
+}
+
 // Velocidade suave de cada padrao — MESMA logica do background.js (aparelho).
 // baseVel = teto (slider). Sem cortes secos: melhor p/ curso curto.
 function patternVel(pat, base, t, st){
@@ -802,11 +809,7 @@ function patternVel(pat, base, t, st){
     return base*0.1;                // pausa do batimento
   }
   if(pat==="escalate") return base*(0.15+0.85*((t%5)/5));         // sobe gradual ate o slider e reinicia
-  if(pat==="tease"){                                               // edging: 0% -> 100% -> corta pra 0
-    const tp=(t%7)/7;
-    if(tp<0.65) return base*(tp/0.65);
-    const r=(tp-0.65)/0.35; return base*Math.max(0, 1-r*3);
-  }
+  if(pat==="tease") return teaseLevel(base, t);                   // pulos 0%<->100% com tempos variados
   if(pat==="random"){                                             // sorteia 0-100% com leve easing
     if(st.last===undefined || t-st.last>1.1){ st.last=t; st.target=base*(0.1+Math.random()*0.9); }
     if(st.cur===undefined) st.cur=base;
