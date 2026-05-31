@@ -801,12 +801,12 @@ function teaseLevel(base, t){
 // baseVel = teto (slider). Sem cortes secos: melhor p/ curso curto.
 function patternVel(pat, base, t, st){
   if(pat==="wave") return base*((Math.sin(t*1.6)+1)/2);           // oscila 0% -> slider
-  if(pat==="pulse"){                                               // batida de coracao (lub-dub-pausa)
-    const ph=(t%1.4)/1.4;
-    if(ph<0.14) return base;        // lub
-    if(ph<0.25) return base*0.2;    // vale
-    if(ph<0.42) return base*0.9;    // dub
-    return base*0.1;                // pausa do batimento
+  if(pat==="pulse"){                                               // batida de coracao SENTIDA (fases longas)
+    const ph=t%2.0;
+    if(ph<0.45) return base;        // tum (forte)
+    if(ph<0.75) return base*0.25;   // vale
+    if(ph<1.20) return base*0.9;    // tum (forte)
+    return base*0.08;               // pausa do batimento
   }
   if(pat==="escalate") return base*(0.15+0.85*((t%5)/5));         // sobe gradual ate o slider e reinicia
   if(pat==="tease") return teaseLevel(base, t);                   // pulos 0%<->100% com tempos variados
