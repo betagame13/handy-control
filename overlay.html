@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt"><head><meta charset="UTF-8"><title>Handy Overlay</title><style>
+  html,body{ margin:0; height:100%; overflow:hidden; background:transparent; font-family:"Segoe UI",system-ui,sans-serif; }
+  body{ display:flex; align-items:flex-start; }
+
+  .ov{ position:relative; width:354px; margin:14px;
+    background: linear-gradient(135deg, rgba(20,14,30,0.84), rgba(34,16,46,0.84));
+    border:1px solid rgba(255,45,155,0.55); border-radius:16px; padding:13px 15px;
+    box-shadow:0 0 26px rgba(162,60,255,0.35); color:#fff; overflow:hidden;
+    transition: border-color .5s, box-shadow .5s, background .5s; }
+  .ov.ctrl{ border-color: rgba(255,23,68,0.7); box-shadow:0 0 30px rgba(255,23,68,0.45); }
+  .ov.fire{ border-color:#ff7a00; background:linear-gradient(135deg, rgba(60,20,0,0.9), rgba(80,10,0,0.9));
+    box-shadow:0 0 40px rgba(255,90,0,0.65); animation:fireGlow 1.1s ease-in-out infinite alternate; }
+  @keyframes fireGlow{ from{box-shadow:0 0 34px rgba(255,90,0,0.55);} to{box-shadow:0 0 52px rgba(255,150,0,0.9);} }
+
+  .ov-head{ display:flex; align-items:center; gap:11px; margin-bottom:9px; }
+  .ov-emoji-wrap{ position:relative; width:40px; height:40px; flex-shrink:0; }
+  .oe{ position:absolute; inset:0; width:40px; height:40px; transition:opacity .6s ease; opacity:0; }
+  .ov-info{ flex:1; min-width:0; }
+  .ov-pat{ font-size:15px; font-weight:800; background:linear-gradient(135deg,#ff2d9b,#a23cff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .ov.fire .ov-pat{ background:linear-gradient(135deg,#ffd000,#ff5a00); -webkit-background-clip:text; }
+  .ov-sub{ font-size:11px; color:#cbb6d6; }
+  .ov.fire .ov-sub{ color:#ffd9a8; }
+  .ov-right{ text-align:right; flex-shrink:0; }
+  .ov-right-lbl{ font-size:8px; color:#9a86a6; text-transform:uppercase; letter-spacing:.5px; }
+  .ov-right-val{ font-size:16px; font-weight:800; color:#ff2d9b; font-variant-numeric:tabular-nums; }
+  .ov.fire .ov-right-val{ color:#ff8c1a; }
+  .ov-chartwrap{ position:relative; height:70px; }
+  canvas{ display:block; width:100%; height:70px; }
+
+  .ov-faixas{ display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:9px; }
+  .fx{ display:block; text-align:center; font-size:10px; font-weight:700; padding:3px 7px; border-radius:10px; border:1px solid; }
+  .ov-rank{ margin-top:8px; font-size:11px; color:#d9c8e2; line-height:1.5; }
+  .ov-rank .rk-h{ color:#ffd24d; font-weight:800; } .ov-rank b{ color:#fff; }
+
+  .ov.flash{ animation:flash .6s ease; }
+  @keyframes flash{ 0%{filter:none;} 30%{filter:brightness(1.5);} 100%{filter:none;} }
+  .tip-pop{ position:absolute; bottom:4px; font-size:14px; font-weight:800; text-shadow:0 0 8px rgba(255,45,155,.8); pointer-events:none; white-space:nowrap; animation:pop 1.8s ease forwards; }
+  .tip-pop b{ color:#fff; }
+  @keyframes pop{ 0%{opacity:0; transform:translateY(6px) scale(.6);} 14%{opacity:1; transform:translateY(-6px) scale(1.1);} 100%{opacity:0; transform:translateY(-60px) scale(1);} }
+</style></head><body>
+  <div class="ov" id="ov">
+    <div class="ov-head">
+      <div class="ov-emoji-wrap"><img class="oe" id="oeA" alt=""><img class="oe" id="oeB" alt=""></div>
+      <div class="ov-info">
+        <div class="ov-pat" id="pat">Aguardando</div>
+        <div class="ov-sub" id="sub">Mande tk pra esquentar 😴</div>
+      </div>
+      <div class="ov-right"><div class="ov-right-lbl" id="rlbl">Tesão</div><div class="ov-right-val" id="rval">0%</div></div>
+    </div>
+    <div class="ov-chartwrap" id="chartwrap"><canvas id="c"></canvas></div>
+    <div class="ov-faixas" id="faixas"></div>
+    <div class="ov-rank" id="rank"><span class="rk-h">🏆 Top:</span> ainda sem tk</div>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const FIREBASE_CONFIG = {
+  apiKey:"AIzaSyDuCce8-CEY2LdTO0S_ypwjqpXdcJihGHo",
+  authDomain:"handy-stripchat.firebaseapp.com",
+  databaseURL:"https://handy-stripchat-default-rtdb.firebaseio.com",
+  projectId:"handy-stripchat", storageBucket:"handy-stripchat.firebasestorage.app",
+  messagingSenderId:"164073155377", appId:"1:164073155377:web:1ac29507bcdafae6855e10"
+};
+const db = getDatabase(initializeApp(FIREBASE_CONFIG));
+
+const ROOT='https://raw.githubusercontent.com/Tarikul-Islam-Anik/Microsoft-Teams-Animated-Emojis/master/Emojis/Smilies/';
+const EM={ sleep:ROOT+'Sleeping%20Face.png', smirk:ROOT+'Smirking%20Face.png', flush:ROOT+'Flushed%20Face.png',
+           hot:ROOT+'Hot%20Face.png', drool:ROOT+'Drooling%20Face.png', devil:ROOT+'Smiling%20Face%20with%20Horns.png',
+           fire:ROOT+'Heart%20on%20Fire.png' };
+Object.values(EM).forEach(u=>{ const i=new Image(); i.src=u; });
+
+const COLORS=['#64b5f6','#81c784','#ffb74d','#f48fb1'];
+let FAIXAS=[ {min:1,max:9,vel:20,dur:3,color:COLORS[0]}, {min:10,max:49,vel:50,dur:7,color:COLORS[1]},
+             {min:50,max:99,vel:75,dur:12,color:COLORS[2]}, {min:100,max:99999,vel:100,dur:20,color:COLORS[3]} ];
+function faixaFor(a){ for(const f of FAIXAS){ if(a>=f.min&&a<=f.max)return f; } return FAIXAS[FAIXAS.length-1]; }
+function rebuildFaixas(){ const el=document.getElementById('faixas'); el.innerHTML='';
+  FAIXAS.forEach(f=>{ const c=document.createElement('span'); c.className='fx'; c.style.color=f.color; c.style.borderColor=f.color+'88'; c.style.background=f.color+'14';
+    c.textContent=(f.max>=9999?f.min+'+':f.min+'-'+f.max)+' → '+f.vel+'% · '+f.dur+'s'; el.appendChild(c); }); }
+rebuildFaixas();
+
+let oeA=document.getElementById('oeA'), oeB=document.getElementById('oeB'), front=oeA, back=oeB, curUrl='';
+function setEmoji(u){ if(u===curUrl)return; curUrl=u; back.src=u; back.style.opacity=1; front.style.opacity=0; const t=front; front=back; back=t; }
+setEmoji(EM.sleep);
+
+let heat=0, controlled=false, controlRem=0, activeVel=0, tipUntil=0;
+function nowMs(){ return performance.now(); }
+function heatEmoji(h){ if(h<15)return EM.sleep; if(h<40)return EM.smirk; if(h<65)return EM.flush; if(h<90)return EM.hot; return EM.drool; }
+function heatTxt(h){ if(h<15)return'Mande tk pra esquentar 😴'; if(h<40)return'Começando... 😏'; if(h<65)return'Esquentando 😳'; if(h<90)return'Quase lá 🥵'; return'No talo! 🤤'; }
+
+const canvas=document.getElementById('c'), ctx=canvas.getContext('2d'); let samples=[]; const WINDOW=6000;
+function resize(){ const w=canvas.parentElement.offsetWidth,h=70,dpr=devicePixelRatio||1; canvas.width=w*dpr; canvas.height=h*dpr; canvas.style.width=w+'px'; canvas.style.height=h+'px'; ctx.setTransform(dpr,0,0,dpr,0,0); }
+addEventListener('resize',resize);
+const t0=performance.now();
+function patVel(t){ const idx=Math.floor(t/6)%4, lt=t%6;
+  if(idx===0) return 80*((Math.sin(lt*1.6)+1)/2);
+  if(idx===1){ const ph=lt%2; if(ph<0.45)return 80; if(ph<0.75)return 20; if(ph<1.2)return 72; return 6; }
+  if(idx===2){ const ph=lt%4; return ph<2.4?80:0; }
+  return 80*(0.15+0.85*((lt%4)/4)); }
+function draw(fire){ const w=canvas.width/(devicePixelRatio||1),h=70; ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(samples.length<2)return; const now=performance.now(),tStart=now-WINDOW; const clr=fire?'#ff7a00':(controlled?'#ff1744':'#ff2d9b');
+  const pts=samples.map(s=>({x:((s.t-tStart)/WINDOW)*w,y:h-(s.v/100)*h*0.8-6}));
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
+  const last=pts[pts.length-1]; ctx.lineTo(last.x,h); ctx.lineTo(pts[0].x,h); ctx.closePath();
+  const g=ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,clr+'66'); g.addColorStop(1,clr+'00'); ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
+  ctx.strokeStyle=clr; ctx.lineWidth=2.2; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.shadowColor=clr; ctx.shadowBlur=10; ctx.stroke(); ctx.shadowBlur=0;
+  ctx.beginPath(); ctx.arc(last.x,last.y,3.5,0,7); ctx.fillStyle=clr; ctx.fill(); }
+let lastT=performance.now();
+function loop(){ const now=performance.now(), dt=(now-lastT)/1000; lastT=now; const t=(now-t0)/1000;
+  const active = now < tipUntil;
+  const fire = !controlled && heat >= 99.5;
+  if(!active && !controlled){ heat=Math.max(0, heat - 6*dt); activeVel=0; }
+  let v = controlled ? patVel(t) : (active ? activeVel : 0);
+  samples.push({t:now,v}); const cut=now-WINDOW-200; while(samples.length&&samples[0].t<cut)samples.shift();
+  draw(fire);
+  const ov=document.getElementById('ov'), pat=document.getElementById('pat');
+  ov.classList.toggle('ctrl', controlled); ov.classList.toggle('fire', fire);
+  if(controlled){ setEmoji(EM.devil); pat.textContent='No controle'; document.getElementById('sub').textContent='Sendo controlado';
+    document.getElementById('rlbl').textContent='Tempo'; document.getElementById('rval').textContent=fmt(Math.max(0,controlRem)); }
+  else if(fire){ setEmoji(EM.fire); pat.textContent='PEGANDO FOGO!'; document.getElementById('sub').textContent='Tesão no máximo!';
+    document.getElementById('rlbl').textContent='Tempo'; document.getElementById('rval').textContent=fmt(Math.max(0,(tipUntil-now)/1000)); }
+  else { setEmoji(heatEmoji(heat)); pat.textContent='Aguardando'; document.getElementById('sub').textContent=heatTxt(heat);
+    document.getElementById('rlbl').textContent='Tesão'; document.getElementById('rval').textContent=Math.round(heat)+'%'; }
+  requestAnimationFrame(loop); }
+resize(); requestAnimationFrame(loop);
+function fmt(s){ s=Math.round(s); const m=Math.floor(s/60),x=s%60; return m+':'+String(x).padStart(2,'0'); }
+
+const totals={};
+function renderRank(){ const el=document.getElementById('rank');
+  const arr=Object.keys(totals).map(n=>[n,totals[n]]).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  if(!arr.length){ el.innerHTML='<span class="rk-h">🏆 Top:</span> ainda sem tk'; return; }
+  const med=['🥇','🥈','🥉']; el.innerHTML='<span class="rk-h">🏆 Top:</span> '+arr.map((x,i)=>med[i]+' <b>'+x[0]+'</b> '+x[1]).join('  ·  '); }
+
+const ovEl=document.getElementById('ov'), wrap=document.getElementById('chartwrap');
+function tip(a, name){ a=Number(a)||0; if(a<=0) return; name=name||'Anônimo'; const f=faixaFor(a); const now=nowMs();
+  heat=Math.min(100, heat + a);
+  activeVel=Math.max(now<tipUntil?activeVel:0, f.vel);
+  tipUntil=Math.max(now, tipUntil) + f.dur*1000;
+  totals[name]=(totals[name]||0)+a; renderRank();
+  ovEl.classList.remove('flash'); void ovEl.offsetWidth; ovEl.classList.add('flash');
+  const fp=(a>=100); const p=document.createElement('div'); p.className='tip-pop'; p.style.color=(fp?'#ff8c1a':f.color);
+  p.innerHTML='<b>'+name+'</b> +'+a+' tk '+(fp?'\u{1F525}':'\u{1F496}'); p.style.left=(18+Math.random()*150)+'px';
+  wrap.appendChild(p); setTimeout(()=>p.remove(),1800); }
+
+setInterval(()=>{ if(controlled){ controlRem-=1; if(controlRem<=0) controlled=false; } },1000);
+
+// ===== FIREBASE: liga nos dados reais =====
+// Faixas (sincroniza com a extensão)
+onValue(ref(db,'handy/config'), snap=>{ const d=snap.val();
+  if(d && Array.isArray(d.faixas) && d.faixas.length){
+    FAIXAS = d.faixas.map((f,i)=>({ min:f.min, max:f.max, vel:f.vel, dur:f.dur, color:f.color||COLORS[i%COLORS.length] }));
+    rebuildFaixas();
+  }
+});
+// Tips (valor + nome) — dispara o tip() quando chega um novo
+let lastTipTs = Date.now();
+onValue(ref(db,'handy/tips'), snap=>{ const d=snap.val();
+  if(!d || !d.ts || d.ts<=lastTipTs) return; lastTipTs=d.ts; tip(d.amount, d.name);
+});
+// Controle (alguém comandando pelo site) -> 😈
+onValue(ref(db,'handy/control'), snap=>{ const d=snap.val()||{};
+  if(d.active){ controlled=true; controlRem=Number(d.remaining)||controlRem; } else { controlled=false; }
+});
+</script>
+</body></html>
