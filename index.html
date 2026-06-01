@@ -591,7 +591,6 @@ function enterApp(){
     loadAdminTokens();
   }
   listenHandyState();
-  startCtrlPub();   // publica o estado de controle pro overlay (😈)
   // Tenta até o canvas ter tamanho real (max 10 tentativas)
   let _tries = 0;
   function initChart(){
@@ -874,24 +873,17 @@ function updatePatternBadge(name){
   el.style.borderColor="rgba("+rgb[0]+","+rgb[1]+","+rgb[2]+",0.4)";
 }
 
-async function sendCmd(cmd){ await set(ref(db,"handy/command"),{...cmd,from:session.code,ts:Date.now()}); }
-
-// Publica o estado de CONTROLE pro overlay (😈 quando um viewer esta controlando)
-let _ctrlPub=null;
-function publishControl(){
-  try{
-    const active = !!(session && !isAdmin && isRunning);
-    let rem=0;
-    if(active && session.token){ const used=session.token.activatedAt?(Date.now()-session.token.activatedAt):0; rem=Math.max(0,Math.round((timerDuration-used)/1000)); }
-    set(ref(db,"handy/control"), { active, remaining: rem, ts: Date.now() });
-  }catch(e){}
+async function sendCmd(cmd){
+  let rem=0;
+  try { if(!isAdmin && session && session.token){ const used=session.token.activatedAt?(Date.now()-session.token.activatedAt):0; rem=Math.max(0,Math.round((timerDuration-used)/1000)); } } catch(e){}
+  await set(ref(db,"handy/command"),{...cmd, from:session.code, ts:Date.now(), rem});
 }
-function startCtrlPub(){ if(_ctrlPub) return; publishControl(); _ctrlPub=setInterval(publishControl, 4000); }
-function stopCtrlPub(){ if(_ctrlPub){ clearInterval(_ctrlPub); _ctrlPub=null; } try{ set(ref(db,"handy/control"),{active:false,remaining:0,ts:Date.now()}); }catch(e){} }
 
 // ADMIN
 async function loadAdminTokens(){
   const grid=$("adminGrid");
+  grid.innerHTML='<div style="color:var(--muted);font-size:13px;line-height:1.6">🔒 Por segurança, a lista de tokens não fica exposta no site.<br>Crie, veja e revogue os tokens pela <b>extensão</b>.</div>';
+  return;
   const snap=await get(ref(db,"tokens"));
   grid.innerHTML="";
   if(!snap.exists()){ grid.innerHTML="<div style=\"color:var(--muted);font-size:13px\">Nenhum token ainda.</div>"; return; }
@@ -919,7 +911,6 @@ async function loadAdminTokens(){
 // LOGOUT
 function logout(){
   // Para tudo
-  stopCtrlPub();
   clearInterval(timerInterval); timerInterval=null;
   stopPatternLoop(); stopChartLoop();
   if(sampleInterval){ clearInterval(sampleInterval); sampleInterval=null; }

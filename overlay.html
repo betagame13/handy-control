@@ -75,6 +75,9 @@ function _getTipPub(){ if(!_tipPubP) _tipPubP=crypto.subtle.importKey('jwk', TIP
 function _b64ToBuf(b){ const s=atob(b); const u=new Uint8Array(s.length); for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i); return u.buffer; }
 async function verifyTip(d){ try{ if(!d||!d.sig) return false; const k=await _getTipPub();
   return await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'}, k, _b64ToBuf(d.sig), new TextEncoder().encode(d.amount+'|'+(d.name||'')+'|'+d.ts)); }catch(e){ return false; } }
+async function verifyConfig(d){ try{ if(!d||!d.sig||!Array.isArray(d.faixas)) return false; const k=await _getTipPub();
+  const canon=d.faixas.map(f=>f.min+','+f.max+','+f.vel+','+f.dur).join(';')+'|'+d.ts;
+  return await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'}, k, _b64ToBuf(d.sig), new TextEncoder().encode(canon)); }catch(e){ return false; } }
 
 const ROOT='https://raw.githubusercontent.com/Tarikul-Islam-Anik/Microsoft-Teams-Animated-Emojis/master/Emojis/Smilies/';
 const EM={ sleep:ROOT+'Sleeping%20Face.png', smirk:ROOT+'Smirking%20Face.png', flush:ROOT+'Flushed%20Face.png',
@@ -155,19 +158,18 @@ function tip(a, name){ a=Number(a)||0; if(a<=0||a>100000) return; name=String(na
   p.innerHTML='<b>'+esc(name)+'</b> +'+a+' tk '+(fp?'\u{1F525}':'\u{1F496}'); p.style.left=(18+Math.random()*150)+'px';
   wrap.appendChild(p); setTimeout(()=>p.remove(),1800); }
 
-setInterval(()=>{ if(controlled){ controlRem-=1; if(controlRem<=0) controlled=false; } },1000);
+setInterval(()=>{ if(controlled && controlRem>0) controlRem-=1; },1000);   // só conta o display; quem liga/desliga e o handy/command
 
 // ===== FIREBASE: liga nos dados reais =====
 // Faixas (sincroniza com a extensão)
-onValue(ref(db,'handy/config'), snap=>{ const d=snap.val();
-  if(d && Array.isArray(d.faixas) && d.faixas.length){
-    FAIXAS = d.faixas.slice(0,8).map((f,i)=>({
-      min:+f.min||0, max:+f.max||0,
-      vel:Math.max(0,Math.min(100,+f.vel||0)), dur:Math.max(0,Math.min(600,+f.dur||0)),
-      color:(/^#[0-9a-fA-F]{3,8}$/.test(f.color)?f.color:COLORS[i%COLORS.length])   // só aceita cor hex
-    }));
-    rebuildFaixas();
-  }
+onValue(ref(db,'handy/config'), async snap=>{ const d=snap.val();
+  if(!(await verifyConfig(d))) return;   // só config ASSINADA pela extensão
+  FAIXAS = d.faixas.slice(0,8).map((f,i)=>({
+    min:+f.min||0, max:+f.max||0,
+    vel:Math.max(0,Math.min(100,+f.vel||0)), dur:Math.max(0,Math.min(600,+f.dur||0)),
+    color:(/^#[0-9a-fA-F]{3,8}$/.test(f.color)?f.color:COLORS[i%COLORS.length])
+  }));
+  rebuildFaixas();
 });
 // Tips (valor + nome) — dispara o tip() quando chega um novo
 let lastTipTs = Date.now();
@@ -176,9 +178,12 @@ onValue(ref(db,'handy/tips'), async snap=>{ const d=snap.val();
   if(!(await verifyTip(d))) return;   // ignora tip sem assinatura valida (anti-fake)
   lastTipTs=d.ts; tip(d.amount, d.name);
 });
-// Controle (alguém comandando pelo site) -> 😈
-onValue(ref(db,'handy/control'), snap=>{ const d=snap.val()||{};
-  if(d.active){ controlled=true; controlRem=Number(d.remaining)||controlRem; } else { controlled=false; }
+// Controle derivado do handy/command (só TOKEN VÁLIDO escreve lá -> não dá pra fingir 😈)
+let _lastCmdAt=0;
+onValue(ref(db,'handy/command'), snap=>{ const c=snap.val()||{};
+  if(c && (c.type==='start' || c.type==='velocity')){ controlled=true; controlRem=Number(c.rem)||0; _lastCmdAt=Date.now(); }
+  else if(c && c.type==='stop'){ controlled=false; }
 });
+setInterval(()=>{ if(controlled && Date.now()-_lastCmdAt>8000) controlled=false; }, 1000);  // 8s sem comando = parou
 </script>
 </body></html>
