@@ -65,6 +65,9 @@ const FIREBASE_CONFIG = {
 };
 const db = getDatabase(initializeApp(FIREBASE_CONFIG));
 
+// SEGURANCA: escapa qualquer texto vindo de fora (impede injetar HTML/imagem/script na tela)
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
 const ROOT='https://raw.githubusercontent.com/Tarikul-Islam-Anik/Microsoft-Teams-Animated-Emojis/master/Emojis/Smilies/';
 const EM={ sleep:ROOT+'Sleeping%20Face.png', smirk:ROOT+'Smirking%20Face.png', flush:ROOT+'Flushed%20Face.png',
            hot:ROOT+'Hot%20Face.png', drool:ROOT+'Drooling%20Face.png', devil:ROOT+'Smiling%20Face%20with%20Horns.png',
@@ -131,17 +134,17 @@ const totals={};
 function renderRank(){ const el=document.getElementById('rank');
   const arr=Object.keys(totals).map(n=>[n,totals[n]]).sort((a,b)=>b[1]-a[1]).slice(0,3);
   if(!arr.length){ el.innerHTML='<span class="rk-h">🏆 Top:</span> ainda sem tk'; return; }
-  const med=['🥇','🥈','🥉']; el.innerHTML='<span class="rk-h">🏆 Top:</span> '+arr.map((x,i)=>med[i]+' <b>'+x[0]+'</b> '+x[1]).join('  ·  '); }
+  const med=['🥇','🥈','🥉']; el.innerHTML='<span class="rk-h">🏆 Top:</span> '+arr.map((x,i)=>med[i]+' <b>'+esc(x[0])+'</b> '+(Number(x[1])||0)).join('  ·  '); }
 
 const ovEl=document.getElementById('ov'), wrap=document.getElementById('chartwrap');
-function tip(a, name){ a=Number(a)||0; if(a<=0) return; name=name||'Anônimo'; const f=faixaFor(a); const now=nowMs();
+function tip(a, name){ a=Number(a)||0; if(a<=0||a>100000) return; name=String(name||'Anônimo').slice(0,24); const f=faixaFor(a); const now=nowMs();
   heat=Math.min(100, heat + a);
   activeVel=Math.max(now<tipUntil?activeVel:0, f.vel);
   tipUntil=Math.max(now, tipUntil) + f.dur*1000;
   totals[name]=(totals[name]||0)+a; renderRank();
   ovEl.classList.remove('flash'); void ovEl.offsetWidth; ovEl.classList.add('flash');
   const fp=(a>=100); const p=document.createElement('div'); p.className='tip-pop'; p.style.color=(fp?'#ff8c1a':f.color);
-  p.innerHTML='<b>'+name+'</b> +'+a+' tk '+(fp?'\u{1F525}':'\u{1F496}'); p.style.left=(18+Math.random()*150)+'px';
+  p.innerHTML='<b>'+esc(name)+'</b> +'+a+' tk '+(fp?'\u{1F525}':'\u{1F496}'); p.style.left=(18+Math.random()*150)+'px';
   wrap.appendChild(p); setTimeout(()=>p.remove(),1800); }
 
 setInterval(()=>{ if(controlled){ controlRem-=1; if(controlRem<=0) controlled=false; } },1000);
@@ -150,7 +153,11 @@ setInterval(()=>{ if(controlled){ controlRem-=1; if(controlRem<=0) controlled=fa
 // Faixas (sincroniza com a extensão)
 onValue(ref(db,'handy/config'), snap=>{ const d=snap.val();
   if(d && Array.isArray(d.faixas) && d.faixas.length){
-    FAIXAS = d.faixas.map((f,i)=>({ min:f.min, max:f.max, vel:f.vel, dur:f.dur, color:f.color||COLORS[i%COLORS.length] }));
+    FAIXAS = d.faixas.slice(0,8).map((f,i)=>({
+      min:+f.min||0, max:+f.max||0,
+      vel:Math.max(0,Math.min(100,+f.vel||0)), dur:Math.max(0,Math.min(600,+f.dur||0)),
+      color:(/^#[0-9a-fA-F]{3,8}$/.test(f.color)?f.color:COLORS[i%COLORS.length])   // só aceita cor hex
+    }));
     rebuildFaixas();
   }
 });
