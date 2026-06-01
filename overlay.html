@@ -68,6 +68,14 @@ const db = getDatabase(initializeApp(FIREBASE_CONFIG));
 // SEGURANCA: escapa qualquer texto vindo de fora (impede injetar HTML/imagem/script na tela)
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+// SEGURANCA: so aceita tips ASSINADOS pela extensao da modelo (chave PUBLICA — pode ser publica)
+const TIP_PUBKEY = {"crv":"P-256","ext":true,"key_ops":["verify"],"kty":"EC","x":"DgEZ68jzErO27HVE61OLv9GDsn-R0tWn-fjxYXgacVU","y":"BgAUUvxxSGGCuK3et71RcDm1pjy-Rp4dpdid6ClfaPw"};
+let _tipPubP=null;
+function _getTipPub(){ if(!_tipPubP) _tipPubP=crypto.subtle.importKey('jwk', TIP_PUBKEY, {name:'ECDSA',namedCurve:'P-256'}, false, ['verify']); return _tipPubP; }
+function _b64ToBuf(b){ const s=atob(b); const u=new Uint8Array(s.length); for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i); return u.buffer; }
+async function verifyTip(d){ try{ if(!d||!d.sig) return false; const k=await _getTipPub();
+  return await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'}, k, _b64ToBuf(d.sig), new TextEncoder().encode(d.amount+'|'+(d.name||'')+'|'+d.ts)); }catch(e){ return false; } }
+
 const ROOT='https://raw.githubusercontent.com/Tarikul-Islam-Anik/Microsoft-Teams-Animated-Emojis/master/Emojis/Smilies/';
 const EM={ sleep:ROOT+'Sleeping%20Face.png', smirk:ROOT+'Smirking%20Face.png', flush:ROOT+'Flushed%20Face.png',
            hot:ROOT+'Hot%20Face.png', drool:ROOT+'Drooling%20Face.png', devil:ROOT+'Smiling%20Face%20with%20Horns.png',
@@ -163,8 +171,10 @@ onValue(ref(db,'handy/config'), snap=>{ const d=snap.val();
 });
 // Tips (valor + nome) — dispara o tip() quando chega um novo
 let lastTipTs = Date.now();
-onValue(ref(db,'handy/tips'), snap=>{ const d=snap.val();
-  if(!d || !d.ts || d.ts<=lastTipTs) return; lastTipTs=d.ts; tip(d.amount, d.name);
+onValue(ref(db,'handy/tips'), async snap=>{ const d=snap.val();
+  if(!d || !d.ts || d.ts<=lastTipTs) return;
+  if(!(await verifyTip(d))) return;   // ignora tip sem assinatura valida (anti-fake)
+  lastTipTs=d.ts; tip(d.amount, d.name);
 });
 // Controle (alguém comandando pelo site) -> 😈
 onValue(ref(db,'handy/control'), snap=>{ const d=snap.val()||{};
