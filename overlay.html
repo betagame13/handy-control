@@ -185,16 +185,5 @@ onValue(ref(db,'handy/command'), snap=>{ const c=snap.val()||{};
   else if(c && c.type==='stop'){ controlled=false; }
 });
 setInterval(()=>{ if(controlled && Date.now()-_lastCmdAt>8000) controlled=false; }, 1000);  // 8s sem comando = parou
-
-// ===== TESTE MANUAL (console) — abra o overlay, F12, e chame window.OV.* =====
-window.OV = {
-  tip:(a,n)=>{ tip(a, n||'Teste'); },                          // simula 1 tip (valor + nome)
-  heat:(h)=>{ heat=Math.max(0,Math.min(100,+h||0)); },         // força o tesão em %
-  fire:()=>{ heat=100; },                                      // dispara o FIRE MODE ❤️‍🔥
-  control:(sec,vel)=>{ controlled=true; controlRem=Math.round(+sec||30); activeVel=+vel||60; _lastCmdAt=Date.now()+1e12; }, // 😈 alguém controlando
-  stop:()=>{ controlled=false; _lastCmdAt=0; },                // encerra o controle
-  reset:()=>{ heat=0; controlled=false; controlRem=0; activeVel=0; tipUntil=0; for(const k in totals)delete totals[k]; renderRank(); }
-};
-console.log('%c[Overlay] Teste pronto → OV.tip(50,"Joao") · OV.tip(150,"Maria") · OV.fire() · OV.control(30) · OV.stop() · OV.reset()','color:#ff2d9b;font-weight:bold');
 </script>
 </body></html>
