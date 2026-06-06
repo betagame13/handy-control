@@ -8,7 +8,20 @@
     border:1px solid rgba(255,45,155,0.55); border-radius:16px; padding:13px 15px;
     box-shadow:0 0 26px rgba(162,60,255,0.35); color:#fff; overflow:hidden;
     transition: border-color .5s, box-shadow .5s, background .5s; }
-  .ov.ctrl{ border-color: rgba(255,23,68,0.7); box-shadow:0 0 30px rgba(255,23,68,0.45); }
+  /* === MODO DIABO (controle pelo site) — ROXO === */
+  .ov.ctrl{ border-color:#b026ff;
+    background:linear-gradient(135deg, rgba(30,0,48,0.92), rgba(16,0,32,0.92));
+    box-shadow:0 0 40px rgba(176,38,255,0.6), inset 0 0 40px rgba(140,0,255,0.25);
+    animation:devilThrob 1.1s ease-in-out infinite alternate; }
+  @keyframes devilThrob{
+    from{ box-shadow:0 0 26px rgba(176,38,255,0.5), inset 0 0 30px rgba(140,0,255,0.16); }
+    to{ box-shadow:0 0 56px rgba(190,60,255,0.95), inset 0 0 50px rgba(140,0,255,0.38); } }
+  .ov.ctrl .ov-pat{ background:linear-gradient(135deg,#b026ff,#e29bff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .ov.ctrl .ov-sub{ color:#d6a8ff; }
+  .ov.ctrl .ov-right-lbl{ color:#c08fff; }
+  .ov.ctrl .ov-right-val{ color:#c44dff; }
+  .ov.ctrl .ov-emoji-wrap{ animation:devilShake 1.6s ease-in-out infinite; filter:drop-shadow(0 0 9px rgba(176,38,255,.85)); }
+  @keyframes devilShake{ 0%,100%{transform:rotate(-5deg) scale(1.04);} 50%{transform:rotate(5deg) scale(1.1);} }
   .ov.fire{ border-color:#ff7a00; background:linear-gradient(135deg, rgba(60,20,0,0.9), rgba(80,10,0,0.9));
     box-shadow:0 0 40px rgba(255,90,0,0.65); animation:fireGlow 1.1s ease-in-out infinite alternate; }
   @keyframes fireGlow{ from{box-shadow:0 0 34px rgba(255,90,0,0.55);} to{box-shadow:0 0 52px rgba(255,150,0,0.9);} }
@@ -113,7 +126,7 @@ function patVel(t){ const idx=Math.floor(t/6)%4, lt=t%6;
   if(idx===2){ const ph=lt%4; return ph<2.4?80:0; }
   return 80*(0.15+0.85*((lt%4)/4)); }
 function draw(fire){ const w=canvas.width/(devicePixelRatio||1),h=70; ctx.clearRect(0,0,canvas.width,canvas.height);
-  if(samples.length<2)return; const now=performance.now(),tStart=now-WINDOW; const clr=fire?'#ff7a00':(controlled?'#ff1744':'#ff2d9b');
+  if(samples.length<2)return; const now=performance.now(),tStart=now-WINDOW; const clr=fire?'#ff7a00':(controlled?'#b026ff':'#ff2d9b');
   const pts=samples.map(s=>({x:((s.t-tStart)/WINDOW)*w,y:h-(s.v/100)*h*0.8-6}));
   ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
   const last=pts[pts.length-1]; ctx.lineTo(last.x,h); ctx.lineTo(pts[0].x,h); ctx.closePath();
@@ -131,7 +144,7 @@ function loop(){ const now=performance.now(), dt=(now-lastT)/1000; lastT=now; co
   draw(fire);
   const ov=document.getElementById('ov'), pat=document.getElementById('pat');
   ov.classList.toggle('ctrl', controlled); ov.classList.toggle('fire', fire);
-  if(controlled){ setEmoji(EM.devil); pat.textContent='No controle'; document.getElementById('sub').textContent='Sendo controlado';
+  if(controlled){ setEmoji(EM.devil); pat.textContent='NO CONTROLE'; document.getElementById('sub').textContent='Alguém assumiu o controle!';
     document.getElementById('rlbl').textContent='Tempo'; document.getElementById('rval').textContent=fmt(Math.max(0,controlRem)); }
   else if(fire){ setEmoji(EM.fire); pat.textContent='PEGANDO FOGO!'; document.getElementById('sub').textContent='Tesão no máximo!';
     document.getElementById('rlbl').textContent='Tempo'; document.getElementById('rval').textContent=fmt(Math.max(0,(tipUntil-now)/1000)); }
