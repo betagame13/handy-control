@@ -3,7 +3,8 @@
   html,body{ margin:0; height:100%; overflow:hidden; background:transparent; font-family:"Segoe UI",system-ui,sans-serif; }
   body{ display:flex; align-items:flex-start; }
 
-  .ov{ position:relative; width:410px; margin:14px;
+  .ovwrap{ position:relative; margin:44px 14px 14px 14px; }   /* margem extra em cima pros chifres do modo diabo */
+  .ov{ position:relative; width:410px; z-index:1;
     background: linear-gradient(135deg, rgba(20,14,30,0.84), rgba(34,16,46,0.84));
     border:1px solid rgba(255,45,155,0.55); border-radius:16px; padding:13px 15px;
     box-shadow:0 0 26px rgba(162,60,255,0.35); color:#fff; overflow:hidden;
@@ -30,16 +31,16 @@
   .ov-emoji-wrap{ position:relative; width:50px; height:50px; flex-shrink:0; }
   .oe{ position:absolute; inset:0; width:50px; height:50px; transition:opacity .6s ease; opacity:0; }
   .ov-info{ flex:1; min-width:0; }
-  .ov-pat{ font-size:20px; font-weight:800; background:linear-gradient(135deg,#ff2d9b,#a23cff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .ov-pat{ display:inline-block; font-size:20px; font-weight:800; background:linear-gradient(135deg,#ff2d9b,#a23cff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
   .ov.fire .ov-pat{ background:linear-gradient(135deg,#ffd000,#ff5a00); -webkit-background-clip:text; }
-  .ov-sub{ font-size:14px; color:#cbb6d6; }
+  .ov-sub{ display:inline-block; font-size:14px; color:#cbb6d6; }
   .ov.fire .ov-sub{ color:#ffd9a8; }
   .ov-right{ text-align:right; flex-shrink:0; }
-  .ov-right-lbl{ font-size:10px; color:#9a86a6; text-transform:uppercase; letter-spacing:.5px; }
-  .ov-right-val{ font-size:22px; font-weight:800; color:#ff2d9b; font-variant-numeric:tabular-nums; }
+  .ov-right-lbl{ display:inline-block; font-size:10px; color:#9a86a6; text-transform:uppercase; letter-spacing:.5px; }
+  .ov-right-val{ display:inline-block; font-size:22px; font-weight:800; color:#ff2d9b; font-variant-numeric:tabular-nums; }
   .ov.fire .ov-right-val{ color:#ff8c1a; }
   .ov-chartwrap{ position:relative; height:70px; }
-  canvas{ display:block; width:100%; height:70px; }
+  .ov-chartwrap canvas{ display:block; width:100%; height:70px; }   /* SO o grafico — nao as canvas das correntes */
 
   .ov-faixas{ display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:9px; }
   .fx{ display:block; text-align:center; font-size:13px; font-weight:700; padding:4px 8px; border-radius:10px; border:1px solid; }
@@ -48,22 +49,69 @@
 
   .ov.flash{ animation:flash .6s ease; }
   @keyframes flash{ 0%{filter:none;} 30%{filter:brightness(1.5);} 100%{filter:none;} }
-  .tip-pop{ position:absolute; bottom:4px; font-size:17px; font-weight:800; text-shadow:0 0 8px rgba(255,45,155,.8); pointer-events:none; white-space:nowrap; animation:pop 1.8s ease forwards; }
+  .tip-pop{ position:absolute; bottom:4px; font-size:17px; font-weight:800; text-shadow:0 0 8px rgba(255,45,155,.8); pointer-events:none; white-space:nowrap; animation:pop 1.8s ease forwards; z-index:9; }
   .tip-pop b{ color:#fff; }
   @keyframes pop{ 0%{opacity:0; transform:translateY(6px) scale(.6);} 14%{opacity:1; transform:translateY(-6px) scale(1.1);} 100%{opacity:0; transform:translateY(-60px) scale(1);} }
+
+  /* ====== DECORACAO MODO DEMONIO (correntes + cadeado + chifres) ====== */
+  .ov-content{ position:relative; z-index:2; }
+  .decoClip{ position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; border-radius:16px; }
+  .deco{ position:absolute; inset:0; opacity:0; transition:opacity .35s; }
+  .ov.ctrl .deco{ opacity:1; }
+  .chain{ position:absolute; left:50%; top:50%; }
+  .chainInner{ display:block; opacity:.55; transform:translate(-50%,-50%) rotate(var(--rot,0deg)); }
+  .ovwrap.brilho .chainInner{ filter:drop-shadow(0 0 5px rgba(176,38,255,.9)); }
+  .dvl-flash{ position:absolute; left:50%; top:50%; width:120px; height:120px; transform:translate(-50%,-50%) scale(0); border-radius:50%; background:radial-gradient(circle, rgba(220,150,255,.9), rgba(176,38,255,0) 70%); opacity:0; pointer-events:none; z-index:3; }
+  .lockwrap{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:4; opacity:0; transition:opacity .3s; pointer-events:none; }
+  .ov.ctrl .lockwrap{ opacity:1; }
+  .lock{ opacity:.85; } .lock svg{ width:46px; height:46px; display:block; }
+  .ovwrap.brilho .lock svg{ filter:drop-shadow(0 0 9px rgba(220,150,255,1)); }
+  .hornbox{ position:absolute; left:0; right:0; bottom:100%; height:64px; overflow:hidden; z-index:0; pointer-events:none; }
+  .chifre{ position:absolute; bottom:-21px; width:48px; height:58px; pointer-events:none; filter:drop-shadow(0 2px 5px rgba(0,0,0,.5));
+    opacity:0; transform:translateY(14px) scale(.5); transform-origin:bottom center; transition:opacity .4s, transform .4s cubic-bezier(.2,1.5,.4,1); }
+  .chifre.esq{ left:30px; } .chifre.dir{ right:30px; }
+  .ovwrap.ctrl.horns .chifre{ opacity:1; transform:translateY(0) scale(1); }
+  .ovwrap.ctrl.horns .chifre.dir{ transform:translateY(0) scale(1) scaleX(-1); }
+  /* entrada: corrente tracada GRANDE das pontas de cima, desce, encolhe pro normal */
+  .ov.ctrl .cA .chainInner{ animation:chainGrowA .5s ease-out both; }
+  .ov.ctrl .cB .chainInner{ animation:chainGrowB .5s ease-out both; }
+  .ov.ctrl .lock{ animation:lockSnap .4s .42s cubic-bezier(.2,1.6,.4,1) both; }
+  .ovwrap.ctrl.brilho .dvl-flash{ animation:flashPop .5s .38s ease-out both; }
+  @keyframes chainGrowA{ 0%{ -webkit-clip-path:inset(0 100% 0 0); clip-path:inset(0 100% 0 0); transform:translate(-50%,-50%) rotate(var(--rot)) scale(1.3);} 65%{ transform:translate(-50%,-50%) rotate(var(--rot)) scale(1.28);} 100%{ -webkit-clip-path:inset(0 0 0 0); clip-path:inset(0 0 0 0); transform:translate(-50%,-50%) rotate(var(--rot)) scale(1);} }
+  @keyframes chainGrowB{ 0%{ -webkit-clip-path:inset(0 0 0 100%); clip-path:inset(0 0 0 100%); transform:translate(-50%,-50%) rotate(var(--rot)) scale(1.3);} 65%{ transform:translate(-50%,-50%) rotate(var(--rot)) scale(1.28);} 100%{ -webkit-clip-path:inset(0 0 0 0); clip-path:inset(0 0 0 0); transform:translate(-50%,-50%) rotate(var(--rot)) scale(1);} }
+  @keyframes lockSnap{ 0%{opacity:0;transform:scale(0)} 55%{opacity:.85;transform:scale(1.4)} 75%{transform:scale(.88)} 100%{opacity:.85;transform:scale(1)} }
+  @keyframes flashPop{ 0%{opacity:0;transform:translate(-50%,-50%) scale(.2)} 35%{opacity:1} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)} }
+  /* saida (reverso): corrente cresce e se desfaz da ponta de baixo de volta pra de cima; cadeado some */
+  .ov.ctrl.exiting .cA .chainInner{ animation:chainShrinkA .5s ease-in both; }
+  .ov.ctrl.exiting .cB .chainInner{ animation:chainShrinkB .5s ease-in both; }
+  .ov.ctrl.exiting .lock{ animation:lockOut .34s ease-in both; }
+  @keyframes chainShrinkA{ 0%{ -webkit-clip-path:inset(0 0 0 0); clip-path:inset(0 0 0 0); transform:translate(-50%,-50%) rotate(var(--rot)) scale(1);} 35%{ transform:translate(-50%,-50%) rotate(var(--rot)) scale(1.28);} 100%{ -webkit-clip-path:inset(0 100% 0 0); clip-path:inset(0 100% 0 0); transform:translate(-50%,-50%) rotate(var(--rot)) scale(1.3);} }
+  @keyframes chainShrinkB{ 0%{ -webkit-clip-path:inset(0 0 0 0); clip-path:inset(0 0 0 0); transform:translate(-50%,-50%) rotate(var(--rot)) scale(1);} 35%{ transform:translate(-50%,-50%) rotate(var(--rot)) scale(1.28);} 100%{ -webkit-clip-path:inset(0 0 0 100%); clip-path:inset(0 0 0 100%); transform:translate(-50%,-50%) rotate(var(--rot)) scale(1.3);} }
+  @keyframes lockOut{ 0%{opacity:.85; transform:scale(1);} 100%{opacity:0; transform:scale(0);} }
 </style></head><body>
-  <div class="ov" id="ov">
-    <div class="ov-head">
-      <div class="ov-emoji-wrap"><img class="oe" id="oeA" alt=""><img class="oe" id="oeB" alt=""></div>
-      <div class="ov-info">
-        <div class="ov-pat" id="pat">Aguardando</div>
-        <div class="ov-sub" id="sub">Mande tk pra esquentar 😴</div>
-      </div>
-      <div class="ov-right"><div class="ov-right-lbl" id="rlbl">Tesão</div><div class="ov-right-val" id="rval">0%</div></div>
+  <div class="ovwrap brilho horns" id="ovwrap">
+    <div class="hornbox">
+      <svg class="chifre esq" viewBox="0 0 46 56"><defs><linearGradient id="gradHorn" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#c51162"/><stop offset="45%" stop-color="#a23cff"/><stop offset="100%" stop-color="#ff7ac0"/></linearGradient></defs><path d="M 5 56 C 0 42 3 22 5 6 C 5 1 9 -1 11 4 C 16 22 29 40 35 56 Z" fill="url(#gradHorn)"/></svg>
+      <svg class="chifre dir" viewBox="0 0 46 56"><path d="M 5 56 C 0 42 3 22 5 6 C 5 1 9 -1 11 4 C 16 22 29 40 35 56 Z" fill="url(#gradHorn)"/></svg>
     </div>
-    <div class="ov-chartwrap" id="chartwrap"><canvas id="c"></canvas></div>
-    <div class="ov-faixas" id="faixas"></div>
-    <div class="ov-rank" id="rank"><span class="rk-h">🏆 Top:</span> ainda sem tk</div>
+    <div class="ov" id="ov">
+      <div class="decoClip"><div class="deco" id="deco"></div></div>
+      <div class="dvl-flash"></div>
+      <div class="lockwrap"><div class="lock"></div></div>
+      <div class="ov-content">
+        <div class="ov-head">
+          <div class="ov-emoji-wrap"><img class="oe" id="oeA" alt=""><img class="oe" id="oeB" alt=""></div>
+          <div class="ov-info">
+            <div class="ov-pat" id="pat">Aguardando</div>
+            <div class="ov-sub" id="sub">Mande tk pra esquentar 😴</div>
+          </div>
+          <div class="ov-right"><div class="ov-right-lbl" id="rlbl">Tesão</div><div class="ov-right-val" id="rval">0%</div></div>
+        </div>
+        <div class="ov-chartwrap" id="chartwrap"><canvas id="c"></canvas></div>
+        <div class="ov-faixas" id="faixas"></div>
+        <div class="ov-rank" id="rank"><span class="rk-h">🏆 Top:</span> ainda sem tk</div>
+      </div>
+    </div>
   </div>
 
 <script type="module">
@@ -111,6 +159,43 @@ let oeA=document.getElementById('oeA'), oeB=document.getElementById('oeB'), fron
 function setEmoji(u){ if(u===curUrl)return; curUrl=u; back.src=u; back.style.opacity=1; front.style.opacity=0; const t=front; front=back; back=t; }
 setEmoji(EM.sleep);
 
+// ====== DECORACAO MODO DEMONIO ======
+const LOCK_SVG='<svg viewBox="0 0 48 48"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8c2ff"/><stop offset="1" stop-color="#b026ff"/></linearGradient></defs>'
+  +'<path d="M14 22 v-5 a10 10 0 0 1 20 0 v5" fill="none" stroke="url(#lg)" stroke-width="4" stroke-linecap="round"/>'
+  +'<rect x="9" y="21" width="30" height="22" rx="5" fill="url(#lg)" stroke="#7a00cc" stroke-width="1.5"/>'
+  +'<circle cx="24" cy="30" r="3.4" fill="#3a0060"/><rect x="22.4" y="31.5" width="3.2" height="7" rx="1.5" fill="#3a0060"/></svg>';
+document.querySelector('.lock').innerHTML=LOCK_SVG;
+const CHAIN_MUL=0.68; let _maskN=0, _wasCtrl=false, _exitT=null;
+const dOv=document.getElementById('ov'), wrapEl=document.getElementById('ovwrap'), decoEl=document.getElementById('deco');
+function chainCanvas(len, mul){ const cv=document.createElement('canvas'); len=len|0; mul=mul||1;
+  const size=Math.round(27*mul), step=size*0.56, pad=4, n=Math.max(1,Math.round(len/step));
+  cv.width=Math.round(pad*2+step*n); cv.height=size+12;
+  const x=cv.getContext('2d'), cy=cv.height/2; x.font=size+'px "Segoe UI Emoji","Noto Color Emoji",serif'; x.textAlign='center'; x.textBaseline='middle';
+  for(let i=0;i<=n;i++){ const px=pad+step*i; x.save(); x.translate(px,cy); x.rotate(Math.PI/2); x.fillText('⛓️',0,0); x.restore(); }
+  return cv; }
+function buildChains(){ decoEl.innerHTML='';
+  const r=dOv.getBoundingClientRect(), W=r.width, H=r.height; if(W<10||H<10) return;
+  const len=Math.round(Math.hypot(W,H)*0.99), ang=Math.atan2(H,W)*180/Math.PI;
+  [[ang,'cA'],[-ang,'cB']].forEach(p=>{ const ch=document.createElement('div'); ch.className='chain '+p[1]; const ic=document.createElement('div'); ic.className='chainInner'; ic.style.setProperty('--rot', p[0]+'deg'); ic.appendChild(chainCanvas(len, CHAIN_MUL)); ch.appendChild(ic); decoEl.appendChild(ch); }); }
+function applyMask(){ const r=dOv.getBoundingClientRect(), Wp=Math.round(r.width), Hp=Math.round(r.height); let rects='';
+  [['.ov-pat',0,3,5],['.ov-sub',0,3,2],['.ov-right-lbl',0,3,1],['.ov-right-val',0,3,5],['.fx',0,10,0]].forEach(cfg=>{ const sel=cfg[0],padX=cfg[1],rx=cfg[2],vsh=cfg[3];
+    dOv.querySelectorAll(sel).forEach(e=>{ const b=e.getBoundingClientRect(); if(b.width<2)return; const x=b.left-r.left, y=b.top-r.top;
+      rects+='<rect x="'+(x-padX).toFixed(1)+'" y="'+(y+vsh).toFixed(1)+'" width="'+(b.width+padX*2).toFixed(1)+'" height="'+(b.height-vsh*2).toFixed(1)+'" rx="'+rx+'" fill="black"/>'; }); });
+  const mg=1, base='<rect x="'+mg+'" y="'+mg+'" width="'+(Wp-mg*2)+'" height="'+(Hp-mg*2)+'" rx="15" fill="white"/>';
+  const old=dOv.querySelector('.maskdef'); if(old)old.remove();
+  const id='mk'+(_maskN++);
+  dOv.insertAdjacentHTML('beforeend','<svg class="maskdef" width="'+Wp+'" height="'+Hp+'" style="position:absolute;left:-9999px"><mask id="'+id+'" maskUnits="userSpaceOnUse" x="0" y="0" width="'+Wp+'" height="'+Hp+'">'+base+rects+'</mask></svg>');
+  decoEl.style.webkitMaskImage='url(#'+id+')'; decoEl.style.maskImage='url(#'+id+')'; }
+function syncDeco(){ const lockwrap=dOv.querySelector('.lockwrap');
+  if(controlled && !_wasCtrl){ _wasCtrl=true; clearTimeout(_exitT);
+    dOv.classList.remove('exiting'); wrapEl.classList.remove('exiting');
+    decoEl.style.display=''; if(lockwrap) lockwrap.style.display='';
+    dOv.classList.add('ctrl'); wrapEl.classList.add('ctrl');
+    requestAnimationFrame(()=>requestAnimationFrame(applyMask)); }
+  else if(!controlled && _wasCtrl){ _wasCtrl=false; dOv.classList.add('exiting');
+    _exitT=setTimeout(()=>{ decoEl.style.display='none'; if(lockwrap) lockwrap.style.display='none';
+      dOv.classList.remove('ctrl'); dOv.classList.remove('exiting'); wrapEl.classList.remove('ctrl'); }, 520); } }
+
 let heat=0, controlled=false, controlRem=0, activeVel=0, tipUntil=0;
 function nowMs(){ return performance.now(); }
 function heatEmoji(h){ if(h<15)return EM.sleep; if(h<40)return EM.smirk; if(h<65)return EM.flush; if(h<90)return EM.hot; return EM.drool; }
@@ -118,7 +203,7 @@ function heatTxt(h){ if(h<15)return'Mande tk pra esquentar 😴'; if(h<40)return
 
 const canvas=document.getElementById('c'), ctx=canvas.getContext('2d'); let samples=[]; const WINDOW=6000;
 function resize(){ const w=canvas.parentElement.offsetWidth,h=70,dpr=devicePixelRatio||1; canvas.width=w*dpr; canvas.height=h*dpr; canvas.style.width=w+'px'; canvas.style.height=h+'px'; ctx.setTransform(dpr,0,0,dpr,0,0); }
-addEventListener('resize',resize);
+addEventListener('resize',()=>{ resize(); buildChains(); if(controlled) applyMask(); });
 const t0=performance.now();
 function patVel(t){ const idx=Math.floor(t/6)%4, lt=t%6;
   if(idx===0) return 80*((Math.sin(lt*1.6)+1)/2);
@@ -143,7 +228,7 @@ function loop(){ const now=performance.now(), dt=(now-lastT)/1000; lastT=now; co
   samples.push({t:now,v}); const cut=now-WINDOW-200; while(samples.length&&samples[0].t<cut)samples.shift();
   draw(fire);
   const ov=document.getElementById('ov'), pat=document.getElementById('pat');
-  ov.classList.toggle('ctrl', controlled); ov.classList.toggle('fire', fire);
+  syncDeco(); ov.classList.toggle('fire', fire);
   if(controlled){ setEmoji(EM.devil); pat.textContent='NO CONTROLE'; document.getElementById('sub').textContent='Alguém assumiu o controle!';
     document.getElementById('rlbl').textContent='Tempo'; document.getElementById('rval').textContent=fmt(Math.max(0,controlRem)); }
   else if(fire){ setEmoji(EM.fire); pat.textContent='PEGANDO FOGO!'; document.getElementById('sub').textContent='Tesão no máximo!';
@@ -151,7 +236,7 @@ function loop(){ const now=performance.now(), dt=(now-lastT)/1000; lastT=now; co
   else { setEmoji(heatEmoji(heat)); pat.textContent='Aguardando'; document.getElementById('sub').textContent=heatTxt(heat);
     document.getElementById('rlbl').textContent='Tesão'; document.getElementById('rval').textContent=Math.round(heat)+'%'; }
   requestAnimationFrame(loop); }
-resize(); requestAnimationFrame(loop);
+resize(); buildChains(); requestAnimationFrame(loop);
 function fmt(s){ s=Math.round(s); const m=Math.floor(s/60),x=s%60; return m+':'+String(x).padStart(2,'0'); }
 
 const totals={};
@@ -182,7 +267,7 @@ onValue(ref(db,'handy/config'), async snap=>{ const d=snap.val();
     vel:Math.max(0,Math.min(100,+f.vel||0)), dur:Math.max(0,Math.min(600,+f.dur||0)),
     color:(/^#[0-9a-fA-F]{3,8}$/.test(f.color)?f.color:COLORS[i%COLORS.length])
   }));
-  rebuildFaixas();
+  rebuildFaixas(); if(controlled) requestAnimationFrame(applyMask);
 });
 // Tips (valor + nome) — dispara o tip() quando chega um novo
 let lastTipTs = Date.now();
@@ -192,11 +277,21 @@ onValue(ref(db,'handy/tips'), async snap=>{ const d=snap.val();
   lastTipTs=d.ts; tip(d.amount, d.name);
 });
 // Controle derivado do handy/command (só TOKEN VÁLIDO escreve lá -> não dá pra fingir 😈)
-let _lastCmdAt=0;
+let _lastCmdAt=0, _demoOn=false;
 onValue(ref(db,'handy/command'), snap=>{ const c=snap.val()||{};
   if(c && (c.type==='start' || c.type==='velocity')){ controlled=true; controlRem=Number(c.rem)||0; _lastCmdAt=Date.now(); }
   else if(c && c.type==='stop'){ controlled=false; }
 });
-setInterval(()=>{ if(controlled && Date.now()-_lastCmdAt>8000) controlled=false; }, 1000);  // 8s sem comando = parou
+setInterval(()=>{ if(controlled && !_demoOn && Date.now()-_lastCmdAt>8000) controlled=false; }, 1000);  // 8s sem comando = parou
+
+// ===== TESTE pelo console =====  t(1)=controle  t(0)=desliga  t(2)=+20tk  t(3)=reset
+window.t=function(n){
+  if(n===1){ _demoOn=true; controlled=true; controlRem=60; console.log('[teste] CONTROLE ligado (modo demonio)'); }
+  else if(n===0){ _demoOn=false; controlled=false; console.log('[teste] controle desligado'); }
+  else if(n===2){ tip(20,'Teste'); console.log('[teste] +20 tk enviado'); }
+  else if(n===3){ _demoOn=false; controlled=false; heat=0; controlRem=0; activeVel=0; tipUntil=0; for(const k in totals)delete totals[k]; renderRank(); console.log('[teste] resetado'); }
+  else console.log('use: t(1)=controle, t(0)=desliga, t(2)=+20tk, t(3)=reset');
+};
+console.log('%cTESTE no console -> t(1)=controle  t(0)=desliga  t(2)=+20tk  t(3)=reset','color:#b026ff;font-weight:bold;font-size:13px');
 </script>
 </body></html>
