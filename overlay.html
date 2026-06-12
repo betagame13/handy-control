@@ -192,11 +192,12 @@ function syncDeco(){ const lockwrap=dOv.querySelector('.lockwrap');
     decoEl.style.display=''; if(lockwrap) lockwrap.style.display='';
     dOv.classList.add('ctrl'); wrapEl.classList.add('ctrl');
     requestAnimationFrame(()=>requestAnimationFrame(applyMask)); }
-  else if(!controlled && _wasCtrl){ _wasCtrl=false; dOv.classList.add('exiting');
+  else if(!controlled && _wasCtrl){ _wasCtrl=false; flushQueuedTips(); dOv.classList.add('exiting');
     _exitT=setTimeout(()=>{ decoEl.style.display='none'; if(lockwrap) lockwrap.style.display='none';
       dOv.classList.remove('ctrl'); dOv.classList.remove('exiting'); wrapEl.classList.remove('ctrl'); }, 520); } }
 
 let heat=0, controlled=false, controlRem=0, activeVel=0, tipUntil=0;
+let qTips=[], qTotal=0;   // tk recebidos DURANTE o controle: pausados (visual) e ativados quando o controle acaba
 function nowMs(){ return performance.now(); }
 function heatEmoji(h){ if(h<15)return EM.sleep; if(h<40)return EM.smirk; if(h<65)return EM.flush; if(h<90)return EM.hot; return EM.drool; }
 function heatTxt(h){ if(h<15)return'Mande tk pra esquentar 😴'; if(h<40)return'Começando... 😏'; if(h<65)return'Esquentando 😳'; if(h<90)return'Quase lá 🥵'; return'No talo! 🤤'; }
@@ -229,7 +230,8 @@ function loop(){ const now=performance.now(), dt=(now-lastT)/1000; lastT=now; co
   draw(fire);
   const ov=document.getElementById('ov'), pat=document.getElementById('pat');
   syncDeco(); ov.classList.toggle('fire', fire);
-  if(controlled){ setEmoji(EM.devil); pat.textContent='NO CONTROLE'; document.getElementById('sub').textContent='Alguém assumiu o controle!';
+  if(controlled){ setEmoji(EM.devil); pat.textContent='NO CONTROLE';
+    document.getElementById('sub').textContent = qTotal>0 ? ('⏸️ '+qTotal+' tk na fila — ativam ao fim') : 'Alguém assumiu o controle!';
     document.getElementById('rlbl').textContent='Tempo'; document.getElementById('rval').textContent=fmt(Math.max(0,controlRem)); }
   else if(fire){ setEmoji(EM.fire); pat.textContent='PEGANDO FOGO!'; document.getElementById('sub').textContent='Tesão no máximo!';
     document.getElementById('rlbl').textContent='Tempo'; document.getElementById('rval').textContent=fmt(Math.max(0,(tipUntil-now)/1000)); }
@@ -247,14 +249,19 @@ function renderRank(){ const el=document.getElementById('rank');
 
 const ovEl=document.getElementById('ov'), wrap=document.getElementById('chartwrap');
 function tip(a, name){ a=Number(a)||0; if(a<=0||a>100000) return; name=String(name||'Anônimo').slice(0,24); const f=faixaFor(a); const now=nowMs();
+  totals[name]=(totals[name]||0)+a; renderRank();   // sempre conta no ranking
+  const fp=(a>=100); const p=document.createElement('div'); p.className='tip-pop'; p.style.color=(controlled?'#c08fff':(fp?'#ff8c1a':f.color));
+  p.innerHTML='<b>'+esc(name)+'</b> +'+a+' tk '+(controlled?'⏸️':(fp?'\u{1F525}':'\u{1F496}')); p.style.left=(18+Math.random()*150)+'px';
+  wrap.appendChild(p); setTimeout(()=>p.remove(),1800);
+  if(controlled){ qTips.push({a:a, vel:f.vel, dur:f.dur}); qTotal+=a; return; }   // PAUSA: guarda o efeito; ativa quando o controle acabar
   heat=Math.min(100, heat + a);
   activeVel=Math.max(now<tipUntil?activeVel:0, f.vel);
   tipUntil=Math.max(now, tipUntil) + f.dur*1000;
-  totals[name]=(totals[name]||0)+a; renderRank();
-  ovEl.classList.remove('flash'); void ovEl.offsetWidth; ovEl.classList.add('flash');
-  const fp=(a>=100); const p=document.createElement('div'); p.className='tip-pop'; p.style.color=(fp?'#ff8c1a':f.color);
-  p.innerHTML='<b>'+esc(name)+'</b> +'+a+' tk '+(fp?'\u{1F525}':'\u{1F496}'); p.style.left=(18+Math.random()*150)+'px';
-  wrap.appendChild(p); setTimeout(()=>p.remove(),1800); }
+  ovEl.classList.remove('flash'); void ovEl.offsetWidth; ovEl.classList.add('flash'); }
+// Ativa os tk que ficaram na fila durante o controle (efeito em sequencia: soma os tempos)
+function flushQueuedTips(){ if(!qTips.length) return; const now=nowMs();
+  qTips.forEach(q=>{ heat=Math.min(100, heat+q.a); activeVel=Math.max(activeVel, q.vel); tipUntil=Math.max(now, tipUntil)+q.dur*1000; });
+  qTips=[]; qTotal=0; }
 
 setInterval(()=>{ if(controlled && controlRem>0) controlRem-=1; },1000);   // só conta o display; quem liga/desliga e o handy/command
 
@@ -278,7 +285,8 @@ onValue(ref(db,'handy/tips'), async snap=>{ const d=snap.val();
 });
 // Controle derivado do handy/command (só TOKEN VÁLIDO escreve lá -> não dá pra fingir 😈)
 let _lastCmdAt=0, _demoOn=false;
-onValue(ref(db,'handy/command'), snap=>{ const c=snap.val()||{};
+onValue(ref(db,'handy/command'), snap=>{ if(_demoOn) return;   // no modo teste (t()) ignora o Firebase real
+  const c=snap.val()||{};
   if(c && (c.type==='start' || c.type==='velocity')){ controlled=true; controlRem=Number(c.rem)||0; _lastCmdAt=Date.now(); }
   else if(c && c.type==='stop'){ controlled=false; }
 });
