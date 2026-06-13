@@ -104,7 +104,7 @@
           <div class="ov-emoji-wrap"><img class="oe" id="oeA" alt=""><img class="oe" id="oeB" alt=""></div>
           <div class="ov-info">
             <div class="ov-pat" id="pat">Aguardando</div><br>
-            <div class="ov-sub" id="sub"><lord-icon id="qicon" src="https://cdn.lordicon.com/twpfmtiv.json" trigger="loop" stroke="bold" state="loop-oscillate" colors="primary:#a23cff,secondary:#ff2d9b" style="width:18px;height:18px;vertical-align:-4px;display:none"></lord-icon><span id="subtext">Mande tk pra esquentar 😴</span></div>
+            <div class="ov-sub" id="sub"><lord-icon id="qicon" src="https://cdn.lordicon.com/twpfmtiv.json" trigger="loop" stroke="bold" state="loop-oscillate" colors="primary:#d6a8ff,secondary:#d6a8ff" style="width:18px;height:18px;vertical-align:-4px;display:none"></lord-icon><span id="subtext">Mande tk pra esquentar</span></div>
           </div>
           <div class="ov-right"><div class="ov-right-lbl" id="rlbl">Tesão</div><br><div class="ov-right-val" id="rval">0%</div></div>
         </div>
@@ -202,7 +202,7 @@ let heat=0, controlled=false, controlRem=0, activeVel=0, tipUntil=0;
 let qTips=[], qTotal=0;   // tk recebidos DURANTE o controle: pausados (visual) e ativados quando o controle acaba
 function nowMs(){ return performance.now(); }
 function heatEmoji(h){ if(h<15)return EM.sleep; if(h<40)return EM.smirk; if(h<65)return EM.flush; if(h<90)return EM.hot; return EM.drool; }
-function heatTxt(h){ if(h<15)return'Mande tk pra esquentar 😴'; if(h<40)return'Começando... 😏'; if(h<65)return'Esquentando 😳'; if(h<90)return'Quase lá 🥵'; return'No talo! 🤤'; }
+function heatTxt(h){ if(h<15)return'Mande tk pra esquentar'; if(h<40)return'Começando...'; if(h<65)return'Esquentando'; if(h<90)return'Quase lá'; return'No talo!'; }
 
 const canvas=document.getElementById('c'), ctx=canvas.getContext('2d'); let samples=[]; const WINDOW=6000;
 function resize(){ const w=canvas.parentElement.offsetWidth,h=70,dpr=devicePixelRatio||1; canvas.width=w*dpr; canvas.height=h*dpr; canvas.style.width=w+'px'; canvas.style.height=h+'px'; ctx.setTransform(dpr,0,0,dpr,0,0); }
@@ -255,7 +255,7 @@ const ovEl=document.getElementById('ov'), wrap=document.getElementById('chartwra
 function tip(a, name){ a=Number(a)||0; if(a<=0||a>100000) return; name=String(name||'Anônimo').slice(0,24); const f=faixaFor(a); const now=nowMs();
   totals[name]=(totals[name]||0)+a; renderRank();   // sempre conta no ranking
   const fp=(a>=100); const p=document.createElement('div'); p.className='tip-pop'; p.style.color=(controlled?'#c08fff':(fp?'#ff8c1a':f.color));
-  p.innerHTML='<b>'+esc(name)+'</b> +'+a+' tk '+(controlled?'<lord-icon src="https://cdn.lordicon.com/twpfmtiv.json" trigger="loop" stroke="bold" state="loop-oscillate" colors="primary:#a23cff,secondary:#ff2d9b" style="width:18px;height:18px;vertical-align:-4px"></lord-icon>':(fp?'\u{1F525}':'\u{1F496}')); p.style.left=(18+Math.random()*150)+'px';
+  p.innerHTML='<b>'+esc(name)+'</b> +'+a+' tk '+(controlled?'<lord-icon src="https://cdn.lordicon.com/twpfmtiv.json" trigger="loop" stroke="bold" state="loop-oscillate" colors="primary:#c08fff,secondary:#c08fff" style="width:18px;height:18px;vertical-align:-4px"></lord-icon>':(fp?'\u{1F525}':'\u{1F496}')); p.style.left=(18+Math.random()*150)+'px';
   wrap.appendChild(p); setTimeout(()=>p.remove(),1800);
   if(controlled){ qTips.push({a:a, vel:f.vel, dur:f.dur}); qTotal+=a; return; }   // PAUSA: guarda o efeito; ativa quando o controle acabar
   heat=Math.min(100, heat + a);
