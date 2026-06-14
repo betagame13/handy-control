@@ -252,20 +252,30 @@ function renderRank(){ const el=document.getElementById('rank');
   const med=['🥇','🥈','🥉']; el.innerHTML='<span class="rk-h">🏆 Top:</span> '+arr.map((x,i)=>med[i]+' <b>'+esc(x[0])+'</b> '+(Number(x[1])||0)).join('  ·  '); }
 
 const ovEl=document.getElementById('ov'), wrap=document.getElementById('chartwrap');
+// Pop "+X tk" que estoura na tela (com flash). So aparece quando o tk ACIONA (normal ou ao sair do controle).
+// qAt = horario de ativacao (string "HH:MM:SS") — so presente quando vem da fila de controle
+function showTipPop(a, name, qAt){ const f=faixaFor(a); const fp=(a>=100);
+  const p=document.createElement('div'); p.className='tip-pop'; p.style.color=(fp?'#ff8c1a':f.color);
+  const timeSuffix = qAt ? ' <span style="font-size:12px;opacity:.65;font-weight:500">· '+qAt+'</span>' : '';
+  p.innerHTML='<b>'+esc(name)+'</b> +'+a+' tk '+(fp?'\u{1F525}':'\u{1F496}')+timeSuffix;
+  p.style.left=(18+Math.random()*(qAt?110:150))+'px';
+  if(qAt) p.style.animationDuration='2.6s';
+  wrap.appendChild(p); setTimeout(()=>p.remove(), qAt?2600:1800);
+  ovEl.classList.remove('flash'); void ovEl.offsetWidth; ovEl.classList.add('flash'); }
 function tip(a, name){ a=Number(a)||0; if(a<=0||a>100000) return; name=String(name||'Anônimo').slice(0,24); const f=faixaFor(a); const now=nowMs();
   totals[name]=(totals[name]||0)+a; renderRank();   // sempre conta no ranking
-  const fp=(a>=100); const p=document.createElement('div'); p.className='tip-pop'; p.style.color=(controlled?'#c08fff':(fp?'#ff8c1a':f.color));
-  p.innerHTML='<b>'+esc(name)+'</b> +'+a+' tk '+(controlled?'<lord-icon src="https://cdn.lordicon.com/twpfmtiv.json" trigger="loop" stroke="bold" state="loop-oscillate" colors="primary:#c08fff,secondary:#c08fff" style="width:18px;height:18px;vertical-align:-4px"></lord-icon>':(fp?'\u{1F525}':'\u{1F496}')); p.style.left=(18+Math.random()*150)+'px';
-  wrap.appendChild(p); setTimeout(()=>p.remove(),1800);
-  if(controlled){ qTips.push({a:a, vel:f.vel, dur:f.dur}); qTotal+=a; return; }   // PAUSA: guarda o efeito; ativa quando o controle acabar
+  if(controlled){ qTips.push({a:a, name:name, vel:f.vel, dur:f.dur}); qTotal+=a; return; }   // controle: GUARDA (sem pop) — estoura ao sair do controle
+  showTipPop(a, name);
   heat=Math.min(100, heat + a);
   activeVel=Math.max(now<tipUntil?activeVel:0, f.vel);
-  tipUntil=Math.max(now, tipUntil) + f.dur*1000;
-  ovEl.classList.remove('flash'); void ovEl.offsetWidth; ovEl.classList.add('flash'); }
-// Ativa os tk que ficaram na fila durante o controle (efeito em sequencia: soma os tempos)
+  tipUntil=Math.max(now, tipUntil) + f.dur*1000; }
+// Controle acabou: ativa os tk guardados (efeito somado) e faz os pops ESTOURAREM em sequencia
+// Cada pop mostra o horario real de ativacao da maquina (qAt), nao o horario que o tk foi enviado
 function flushQueuedTips(){ if(!qTips.length) return; const now=nowMs();
-  qTips.forEach(q=>{ heat=Math.min(100, heat+q.a); activeVel=Math.max(activeVel, q.vel); tipUntil=Math.max(now, tipUntil)+q.dur*1000; });
-  qTips=[]; qTotal=0; }
+  const d=new Date(), qAt=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
+  const items=qTips.slice(); qTips=[]; qTotal=0;
+  items.forEach((q,i)=>{ heat=Math.min(100, heat+q.a); activeVel=Math.max(activeVel, q.vel); tipUntil=Math.max(now, tipUntil)+q.dur*1000;
+    setTimeout(()=>showTipPop(q.a, q.name, qAt), 350 + i*220); }); }
 
 setInterval(()=>{ if(controlled && controlRem>0) controlRem-=1; },1000);   // só conta o display; quem liga/desliga e o handy/command
 
