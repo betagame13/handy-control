@@ -106,7 +106,7 @@
             <div class="ov-pat" id="pat">Aguardando</div><br>
             <div class="ov-sub" id="sub"><lord-icon id="qicon" src="https://cdn.lordicon.com/twpfmtiv.json" trigger="loop" stroke="bold" state="loop-oscillate" colors="primary:#d6a8ff,secondary:#d6a8ff" style="width:18px;height:18px;vertical-align:-4px;display:none"></lord-icon><span id="subtext">Mande tk pra esquentar</span></div>
           </div>
-          <div class="ov-right"><div class="ov-right-lbl" id="rlbl">Tesão</div><br><div class="ov-right-val" id="rval">0%</div></div>
+          <div class="ov-right"><div class="ov-right-lbl" id="rlbl">Tempo</div><br><div class="ov-right-val" id="rval">0:00</div></div>
         </div>
         <div class="ov-chartwrap" id="chartwrap"><canvas id="c"></canvas></div>
         <div class="ov-faixas" id="faixas"></div>
@@ -240,7 +240,7 @@ function loop(){ const now=performance.now(), dt=(now-lastT)/1000; lastT=now; co
   else if(fire){ setEmoji(EM.fire); pat.textContent='PEGANDO FOGO!'; setSub('Tesão no máximo!', false);
     document.getElementById('rlbl').textContent='Tempo'; document.getElementById('rval').textContent=fmt(Math.max(0,(tipUntil-now)/1000)); }
   else { setEmoji(heatEmoji(heat)); pat.textContent='Aguardando'; setSub(heatTxt(heat), false);
-    document.getElementById('rlbl').textContent='Tesão'; document.getElementById('rval').textContent=Math.round(heat)+'%'; }
+    document.getElementById('rlbl').textContent='Tempo'; document.getElementById('rval').textContent=fmt(Math.max(0,(tipUntil-now)/1000)); }
   requestAnimationFrame(loop); }
 resize(); buildChains(); requestAnimationFrame(loop);
 function fmt(s){ s=Math.round(s); const m=Math.floor(s/60),x=s%60; return m+':'+String(x).padStart(2,'0'); }
@@ -253,14 +253,10 @@ function renderRank(){ const el=document.getElementById('rank');
 
 const ovEl=document.getElementById('ov'), wrap=document.getElementById('chartwrap');
 // Pop "+X tk" que estoura na tela (com flash). So aparece quando o tk ACIONA (normal ou ao sair do controle).
-// qAt = horario de ativacao (string "HH:MM:SS") — so presente quando vem da fila de controle
-function showTipPop(a, name, qAt){ const f=faixaFor(a); const fp=(a>=100);
+function showTipPop(a, name){ const f=faixaFor(a); const fp=(a>=100);
   const p=document.createElement('div'); p.className='tip-pop'; p.style.color=(fp?'#ff8c1a':f.color);
-  const timeSuffix = qAt ? ' <span style="font-size:12px;opacity:.65;font-weight:500">· '+qAt+'</span>' : '';
-  p.innerHTML='<b>'+esc(name)+'</b> +'+a+' tk '+(fp?'\u{1F525}':'\u{1F496}')+timeSuffix;
-  p.style.left=(18+Math.random()*(qAt?110:150))+'px';
-  if(qAt) p.style.animationDuration='2.6s';
-  wrap.appendChild(p); setTimeout(()=>p.remove(), qAt?2600:1800);
+  p.innerHTML='<b>'+esc(name)+'</b> +'+a+' tk '+(fp?'\u{1F525}':'\u{1F496}'); p.style.left=(18+Math.random()*150)+'px';
+  wrap.appendChild(p); setTimeout(()=>p.remove(),1800);
   ovEl.classList.remove('flash'); void ovEl.offsetWidth; ovEl.classList.add('flash'); }
 function tip(a, name){ a=Number(a)||0; if(a<=0||a>100000) return; name=String(name||'Anônimo').slice(0,24); const f=faixaFor(a); const now=nowMs();
   totals[name]=(totals[name]||0)+a; renderRank();   // sempre conta no ranking
@@ -270,12 +266,10 @@ function tip(a, name){ a=Number(a)||0; if(a<=0||a>100000) return; name=String(na
   activeVel=Math.max(now<tipUntil?activeVel:0, f.vel);
   tipUntil=Math.max(now, tipUntil) + f.dur*1000; }
 // Controle acabou: ativa os tk guardados (efeito somado) e faz os pops ESTOURAREM em sequencia
-// Cada pop mostra o horario real de ativacao da maquina (qAt), nao o horario que o tk foi enviado
 function flushQueuedTips(){ if(!qTips.length) return; const now=nowMs();
-  const d=new Date(), qAt=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
   const items=qTips.slice(); qTips=[]; qTotal=0;
   items.forEach((q,i)=>{ heat=Math.min(100, heat+q.a); activeVel=Math.max(activeVel, q.vel); tipUntil=Math.max(now, tipUntil)+q.dur*1000;
-    setTimeout(()=>showTipPop(q.a, q.name, qAt), 350 + i*220); }); }
+    setTimeout(()=>showTipPop(q.a, q.name), 350 + i*220); }); }
 
 setInterval(()=>{ if(controlled && controlRem>0) controlRem-=1; },1000);   // só conta o display; quem liga/desliga e o handy/command
 
